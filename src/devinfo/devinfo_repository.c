@@ -79,6 +79,7 @@ TDEVINFORepository_LoadDevinfo(TDEVINFORepository* self, SSEString *in_path)
     moat_object_free(self->fDevinfo);
   }
   self->fDevinfo = devinfo;
+  sse_free(path);
   return SSE_E_OK;
   
  error_exit:
@@ -111,7 +112,7 @@ TDEVINFORepository_GetDevinfoWithJson(TDEVINFORepository* self,
       return err;
     }
 
-    json_string = sse_malloc(json_len + 1);
+    json_string = sse_malloc(json_len);
     ASSERT(json_string);
    
     err = moat_object_to_json_string(self->fDevinfo, json_string, &json_len);
@@ -119,10 +120,10 @@ TDEVINFORepository_GetDevinfoWithJson(TDEVINFORepository* self,
       LOG_ERROR("moat_object_to_json_string() ... failed with [%d]", err);
       return err;
     }
-    json_string[json_len] = '\0';
 
-    devinfo = sse_string_new(json_string);
+    devinfo = sse_string_new_with_length(json_string, json_len);
     ASSERT(devinfo);
+    sse_free(json_string);
   }
 
   *out_devinfo = devinfo;
@@ -298,12 +299,11 @@ TDEVINFORepository_SetHardwarePlatformVendor(TDEVINFORepository* self,
 				sse_true);
 
   err = TDEVINFORepository_SetDevinfo(self, key, value);
+  sse_string_free(key, sse_true);
+  moat_value_free(value);
   if (err != SSE_E_OK) {
-    sse_string_free(key, sse_true);
-    moat_value_free(value);
     return err;
   }
-  sse_string_free(key, sse_true);
   return SSE_E_OK;
 }
 
@@ -324,12 +324,12 @@ TDEVINFORepository_SetHardwarePlatformProduct(TDEVINFORepository* self,
 				sse_true);
 
   err = TDEVINFORepository_SetDevinfo(self, key, value);
+  sse_string_free(key, sse_true);
+  moat_value_free(value);
+
   if (err != SSE_E_OK) {
-    sse_string_free(key, sse_true);
-    moat_value_free(value);
     return err;
   }
-  sse_string_free(key, sse_true);
   return SSE_E_OK;
 }
 
@@ -350,12 +350,11 @@ TDEVINFORepository_SetHardwarePlatformModel(TDEVINFORepository* self,
 				sse_true);
 
   err = TDEVINFORepository_SetDevinfo(self, key, value);
+  sse_string_free(key, sse_true);
+  moat_value_free(value);
   if (err != SSE_E_OK) {
-    sse_string_free(key, sse_true);
-    moat_value_free(value);
     return err;
   }
-  sse_string_free(key, sse_true);
   return SSE_E_OK;
 }
 
@@ -376,12 +375,11 @@ TDEVINFORepository_SetHardwarePlatformSerial(TDEVINFORepository* self,
 				sse_true);
 
   err = TDEVINFORepository_SetDevinfo(self, key, value);
+  sse_string_free(key, sse_true);
+  moat_value_free(value);
   if (err != SSE_E_OK) {
-    sse_string_free(key, sse_true);
-    moat_value_free(value);
     return err;
   }
-  sse_string_free(key, sse_true);
   return SSE_E_OK;
 }
 
@@ -402,12 +400,11 @@ TDEVINFORepository_SetHardwarePlatformHwVersion(TDEVINFORepository* self,
 				sse_true);
 
   err = TDEVINFORepository_SetDevinfo(self, key, value);
+  sse_string_free(key, sse_true);
+  moat_value_free(value);
   if (err != SSE_E_OK) {
-    sse_string_free(key, sse_true);
-    moat_value_free(value);
     return err;
   }
-  sse_string_free(key, sse_true);
   return SSE_E_OK;
 }
 
@@ -428,12 +425,11 @@ TDEVINFORepository_SetHardwarePlatformFwVersion(TDEVINFORepository* self,
 				sse_true);
 
   err = TDEVINFORepository_SetDevinfo(self, key, value);
+  sse_string_free(key, sse_true);
+  moat_value_free(value);
   if (err != SSE_E_OK) {
-    sse_string_free(key, sse_true);
-    moat_value_free(value);
     return err;
   }
-  sse_string_free(key, sse_true);
   return SSE_E_OK;
 }
 
@@ -454,12 +450,11 @@ TDEVINFORepository_SetHardwarePlatformDeviceId(TDEVINFORepository* self,
 				sse_true);
 
   err = TDEVINFORepository_SetDevinfo(self, key, value);
+  sse_string_free(key, sse_true);
+  moat_value_free(value);
   if (err != SSE_E_OK) {
-    sse_string_free(key, sse_true);
-    moat_value_free(value);
     return err;
   }
-  sse_string_free(key, sse_true);
   return SSE_E_OK;
 }
 
@@ -480,12 +475,11 @@ TDEVINFORepository_SetHardwarePlatformCategory(TDEVINFORepository* self,
 				sse_true);
 
   err = TDEVINFORepository_SetDevinfo(self, key, value);
+  sse_string_free(key, sse_true);
+  moat_value_free(value);
   if (err != SSE_E_OK) {
-    sse_string_free(key, sse_true);
-    moat_value_free(value);
     return err;
   }
-  sse_string_free(key, sse_true);
   return SSE_E_OK;
 }
 
@@ -506,12 +500,11 @@ TDEVINFORepository_SetHardwareModemType(TDEVINFORepository* self,
 				sse_true);
 
   err = TDEVINFORepository_SetDevinfo(self, key, value);
+  sse_string_free(key, sse_true);
+  moat_value_free(value);
   if (err != SSE_E_OK) {
-    sse_string_free(key, sse_true);
-    moat_value_free(value);
     return err;
   }
-  sse_string_free(key, sse_true);
   return SSE_E_OK;
 }
 
@@ -533,12 +526,11 @@ TDEVINFORepository_SetHardwareModemHwVersion(TDEVINFORepository* self,
 				sse_true);
 
   err = TDEVINFORepository_SetDevinfo(self, key, value);
+  sse_string_free(key, sse_true);
+  moat_value_free(value);
   if (err != SSE_E_OK) {
-    sse_string_free(key, sse_true);
-    moat_value_free(value);
     return err;
   }
-  sse_string_free(key, sse_true);
   return SSE_E_OK;
 }
 
@@ -559,12 +551,11 @@ TDEVINFORepository_SetHardwareModemfwVersion(TDEVINFORepository* self,
 				sse_true);
 
   err = TDEVINFORepository_SetDevinfo(self, key, value);
+  sse_string_free(key, sse_true);
+  moat_value_free(value);
   if (err != SSE_E_OK) {
-    sse_string_free(key, sse_true);
-    moat_value_free(value);
     return err;
   }
-  sse_string_free(key, sse_true);
   return SSE_E_OK;
 }
 
@@ -657,13 +648,11 @@ TDEVINFORepository_AddHadwareNetworkInterface(TDEVINFORepository* self,
     ASSERT(value);
   }
   err = TDEVINFORepository_SetDevinfo(self, key, value);
+  sse_string_free(key, sse_true);
+  moat_value_free(value);
   if (err != SSE_E_OK) {
-    sse_string_free(key, sse_true);
-    moat_value_free(value);
     return err;
   }
-
-  sse_string_free(key, sse_true);
   return SSE_E_OK;
 }
 
@@ -747,13 +736,11 @@ TDEVINFORepository_SetSoftwareOS(TDEVINFORepository* self,
 				sse_true);
 
   err = TDEVINFORepository_SetDevinfo(self, key, value);
+  sse_string_free(key, sse_true);
+  moat_value_free(value);
   if (err != SSE_E_OK) {
-    sse_string_free(key, sse_true);
-    moat_value_free(value);
     return err;
   }
-  sse_string_free(key, sse_true);
-
   return SSE_E_OK;
 }
 
@@ -805,13 +792,11 @@ TDEVINFORepository_SetSoftwareSscl(TDEVINFORepository* self,
 				sse_true);
 
   err = TDEVINFORepository_SetDevinfo(self, key, value);
+  sse_string_free(key, sse_true);
+  moat_value_free(value);
   if (err != SSE_E_OK) {
-    sse_string_free(key, sse_true);
-    moat_value_free(value);
     return err;
   }
-  sse_string_free(key, sse_true);
-
   return SSE_E_OK;
 }
 

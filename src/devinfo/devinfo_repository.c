@@ -66,6 +66,7 @@ TDEVINFORepository_LoadDevinfo(TDEVINFORepository* self, SSEString *in_path)
   path = sse_strndup(sse_string_get_cstr(in_path),
 		     sse_string_get_length(in_path));
   ASSERT(path);
+  LOG_DEBUG("Load devinfo from file=[%s].", path);
 
   err = moat_json_file_to_moat_object(path, &devinfo, &err_msg);
   if (err != SSE_E_OK) {
@@ -112,7 +113,7 @@ TDEVINFORepository_GetDevinfoWithJson(TDEVINFORepository* self,
     json_string = sse_malloc(json_len + 1);
     ASSERT(json_string);
    
-    err = moat_object_to_json_string(self->fDevinfo, NULL, &json_len);
+    err = moat_object_to_json_string(self->fDevinfo, json_string, &json_len);
     if (err != SSE_E_OK) {
       LOG_ERROR("moat_object_to_json_string() ... failed with [%d]", err);
       return err;
@@ -217,7 +218,9 @@ DEVINFORepository_SetDevinfo(MoatObject* in_object,
     key = sse_strndup(sse_string_get_cstr((SSEString *)sse_slist_data(in_key)),
 		      sse_string_get_length((SSEString *)sse_slist_data(in_key)));
     ASSERT(key);
-    err = moat_object_add_value(in_object, key, in_value, sse_true, sse_true);
+    if ((err = moat_object_add_value(in_object, key, in_value, sse_true, sse_true)) != SSE_E_OK) {
+      LOG_ERROR("moat_object_add_value() ... failed with [%d]", err);
+    }
     sse_free(key);
     return err;
   } else {

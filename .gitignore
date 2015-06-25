@@ -3,6 +3,7 @@
 *.swp
 *.log
 *.orig
+*.pyc
 (.*/)?\#[^/]*\#$
 config.gypi
 config.mk

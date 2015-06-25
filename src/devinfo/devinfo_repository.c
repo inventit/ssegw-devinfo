@@ -17,6 +17,7 @@
  */
 #include <servicesync/moat.h>
 #include <devinfo/devinfo.h>
+#include <sseutils.h>
 
 #define TAG "Devinfo:"
 #define LOG_ERROR(format, ...) MOAT_LOG_ERROR(TAG, format, ##__VA_ARGS__)
@@ -577,9 +578,10 @@ TDEVINFORepository_AddHadwareNetworkInterface(TDEVINFORepository* self,
 {
   sse_int err;
   SSEString* key;
-  MoatValue* value;
-  SSESList* ifs;
+  MoatValue* value = NULL;
+  SSESList* ifs = NULL;
   MoatObject* new_if;
+  MoatValue* new_if_value;
 
   ASSERT(self);
   ASSERT(in_name);
@@ -592,21 +594,25 @@ TDEVINFORepository_AddHadwareNetworkInterface(TDEVINFORepository* self,
   ASSERT(key);
 
   err = TDEVINFORepository_GetDevinfo(self, key, &value);
-  if (err != SSE_E_OK) {
+  if (err == SSE_E_OK) {
+    LOG_DEBUG("Add new if into the existing list.");
+    if (moat_value_get_type(value) != MOAT_VALUE_TYPE_LIST) {
+      LOG_ERROR("MoatValue type of interface is not LSIT type.");
+      sse_string_free(key, sse_true);
+      return SSE_E_GENERIC;
+    }
+    err = moat_value_get_list(value, &ifs);
+    if (err != SSE_E_OK) {
+      LOG_ERROR("");
+      sse_string_free(key, sse_true);
+      return err;
+    }
+  } else if (err == SSE_E_NOENT) {
+    LOG_DEBUG("Add new if into the empty list.");
+    value = NULL;
+    ifs = NULL;
+  } else {
     LOG_ERROR("TDEVINFORepository_GetDevinfo() ... failed with [%d].", err);
-    sse_string_free(key, sse_true);
-    return err;
-  }
-
-  if (moat_value_get_type(value) != MOAT_VALUE_TYPE_LIST) {
-    LOG_ERROR("MoatValue type of interface is not LSIT type.");
-    sse_string_free(key, sse_true);
-    return SSE_E_GENERIC;
-  }
-
-  err = moat_value_get_list(value, &ifs);
-  if (err != SSE_E_OK) {
-    LOG_ERROR("");
     sse_string_free(key, sse_true);
     return err;
   }
@@ -642,15 +648,21 @@ TDEVINFORepository_AddHadwareNetworkInterface(TDEVINFORepository* self,
 				      sse_string_get_length(in_ipv6_address),
 				      sse_true,
 				      sse_false) == SSE_E_OK);
-  
-  ASSERT((ifs = sse_slist_add(ifs, new_if)));
 
+  new_if_value = moat_value_new_object(new_if, sse_false);
+  ASSERT((ifs = sse_slist_add(ifs, new_if_value)));
+
+  if (value == NULL) {
+    value = moat_value_new_list(ifs, sse_false);
+    ASSERT(value);
+  }
   err = TDEVINFORepository_SetDevinfo(self, key, value);
   if (err != SSE_E_OK) {
     sse_string_free(key, sse_true);
     moat_value_free(value);
     return err;
   }
+
   sse_string_free(key, sse_true);
   return SSE_E_OK;
 }

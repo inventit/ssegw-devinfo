@@ -13,6 +13,7 @@
       'target_name': '<(package_name)',
       'sources': [
         '<@(sseutils_src)',
+        'src/devinfo/devinfo_repository.c',
         'src/<(package_name).c',
        ],
       'product_prefix': '',

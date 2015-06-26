@@ -94,7 +94,7 @@ TDEVINFORepository_SetHardwareModemHwVersion(TDEVINFORepository* self,
 					     SSEString* in_hw_version);
 
 sse_int
-TDEVINFORepository_SetHardwareModemfwVersion(TDEVINFORepository* self,
+TDEVINFORepository_SetHardwareModemFwVersion(TDEVINFORepository* self,
 					     SSEString* in_fw_version);
 
 sse_int

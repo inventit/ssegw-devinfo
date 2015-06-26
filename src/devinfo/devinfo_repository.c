@@ -469,7 +469,7 @@ TDEVINFORepository_SetHardwarePlatformCategory(TDEVINFORepository* self,
   ASSERT(self);
   ASSERT(in_category);
 
-  key = sse_string_new("hardware.platform.fwVersion");
+  key = sse_string_new("hardware.platform.category");
   value = moat_value_new_string(sse_string_get_cstr(in_category),
 				sse_string_get_length(in_category),
 				sse_true);
@@ -535,7 +535,7 @@ TDEVINFORepository_SetHardwareModemHwVersion(TDEVINFORepository* self,
 }
 
 sse_int
-TDEVINFORepository_SetHardwareModemfwVersion(TDEVINFORepository* self,
+TDEVINFORepository_SetHardwareModemFwVersion(TDEVINFORepository* self,
 					     SSEString* in_fw_version)
 {
   sse_int err;
@@ -760,7 +760,7 @@ TDEVINFORepository_SetSoftwareSscl(TDEVINFORepository* self,
   ASSERT(in_version);
   ASSERT(in_sdk_version);
 
-  key = sse_string_new("software.os.type");
+  key = sse_string_new("software.sscl.type");
   value = moat_value_new_string(sse_string_get_cstr(in_type),
 				sse_string_get_length(in_type),
 				sse_true);
@@ -773,7 +773,7 @@ TDEVINFORepository_SetSoftwareSscl(TDEVINFORepository* self,
   }
   sse_string_free(key, sse_true);
 
-  key = sse_string_new("software.os.version");
+  key = sse_string_new("software.sscl.version");
   value = moat_value_new_string(sse_string_get_cstr(in_version),
 				sse_string_get_length(in_version),
 				sse_true);
@@ -786,7 +786,7 @@ TDEVINFORepository_SetSoftwareSscl(TDEVINFORepository* self,
   }
   sse_string_free(key, sse_true);
 
-  key = sse_string_new("software.os.sdkVersion");
+  key = sse_string_new("software.sscl.sdkVersion");
   value = moat_value_new_string(sse_string_get_cstr(in_sdk_version),
 				sse_string_get_length(in_sdk_version),
 				sse_true);

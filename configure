@@ -45,6 +45,12 @@ parser.add_option("--token",
     dest="token_path",
     help="Path to the security token file. Default path is \'./package/token.bin\'")
 
+parser.add_option("--unittest",
+                  action="store_true",
+                  dest="unittest",
+                  default=False,
+                  help="Enable to perform unit test.")
+
 (options, args) = parser.parse_args()
 
 def cc_macros():
@@ -240,6 +246,8 @@ def configure_app(o):
   moat_lib_dir = os.path.join(moat_root, 'test', target_arch, 'lib')
   o['library_dirs'] = [ moat_lib_dir ]
   o[ 'ldflags' ] = [ '-L' + moat_lib_dir ]
+
+  o['variables']['test_config'] = 'unit' if options.unittest else 'none'
 
 output = {
   'variables': {},

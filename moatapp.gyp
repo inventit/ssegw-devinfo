@@ -27,7 +27,16 @@
       ],
       'dependencies': [
       ],
+      'conditions': [
+        ['test_config == "unit"', {
+          'sources!': [
+            'src/<(package_name).c',
+          ],
+          'sources': [
+            'src/<(package_name)_unittest.c',
+          ],
+        }],
+      ]
     },
-
   ],
 }

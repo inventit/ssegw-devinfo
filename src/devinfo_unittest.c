@@ -276,13 +276,14 @@ test_devinfo_repository__add_all_items(Moat in_moat)
     }
     { // Network
       { // Interface
-	// eth0
+
 	SSEString* if_name;
 	SSEString* if_macaddr;
 	SSEString* if_ipv4addr;
 	SSEString* if_netmask;
 	SSEString* if_ipv6addr;
 
+	// eth0
 	ASSERT((if_name     = sse_string_new("eth0")));
 	ASSERT((if_macaddr  = sse_string_new("00:11:22:aa:bb:cc")));
 	ASSERT((if_ipv4addr = sse_string_new("192.128.1.32")));
@@ -300,12 +301,21 @@ test_devinfo_repository__add_all_items(Moat in_moat)
 	ASSERT((if_macaddr  = sse_string_new("88:1f:a1:10:fd:c8")));
 	ASSERT((if_ipv4addr = sse_string_new("192.168.1.11")));
 	ASSERT((if_netmask  = sse_string_new("255.255.255.0")));
-	ASSERT((if_ipv6addr = sse_string_new("fe80::8a1f:a1ff:fe10:fdc8/64")));
-	ASSERT(TDEVINFORepository_AddHadwareNetworkInterface(&repo, if_name, if_macaddr, if_ipv4addr, if_netmask, if_ipv6addr) == SSE_E_OK);
+	// Some interface might not have IPv6 address.
+	ASSERT(TDEVINFORepository_AddHadwareNetworkInterface(&repo, if_name, if_macaddr, if_ipv4addr, if_netmask, NULL) == SSE_E_OK);
 	sse_string_free(if_name, sse_true);
 	sse_string_free(if_macaddr, sse_true);
 	sse_string_free(if_ipv4addr, sse_true);
 	sse_string_free(if_netmask, sse_true);
+
+	// usb0
+	ASSERT((if_name     = sse_string_new("usb0")));
+	ASSERT((if_macaddr  = sse_string_new("00:11:22:aa:bb:cc")));
+	ASSERT((if_ipv6addr = sse_string_new("fe80::a00:27ff:fea9:d684/64")));
+	// Some interface might not have IPv4 address.
+	ASSERT(TDEVINFORepository_AddHadwareNetworkInterface(&repo, if_name, if_macaddr, NULL, NULL, if_ipv6addr) == SSE_E_OK);
+	sse_string_free(if_name, sse_true);
+	sse_string_free(if_macaddr, sse_true);
 	sse_string_free(if_ipv6addr, sse_true);
       }
       { // Nameserver

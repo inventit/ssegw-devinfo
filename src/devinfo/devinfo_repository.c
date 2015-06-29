@@ -577,9 +577,6 @@ TDEVINFORepository_AddHadwareNetworkInterface(TDEVINFORepository* self,
   ASSERT(self);
   ASSERT(in_name);
   ASSERT(in_hw_address);
-  ASSERT(in_ipv4_address);
-  ASSERT(in_netmask);
-  ASSERT(in_ipv6_address);
 
   key = sse_string_new("hardware.network.interface");
   ASSERT(key);
@@ -621,24 +618,30 @@ TDEVINFORepository_AddHadwareNetworkInterface(TDEVINFORepository* self,
 				      sse_string_get_length(in_hw_address),
 				      sse_true,
 				      sse_false) == SSE_E_OK);
-  ASSERT(moat_object_add_string_value(new_if,
-				      "ipv4Address",
-				      sse_string_get_cstr(in_ipv4_address),
-				      sse_string_get_length(in_ipv4_address),
-				      sse_true,
-				      sse_false) == SSE_E_OK);
-  ASSERT(moat_object_add_string_value(new_if,
-				      "netmask",
-				      sse_string_get_cstr(in_netmask),
-				      sse_string_get_length(in_netmask),
-				      sse_true,
-				      sse_false) == SSE_E_OK);
-  ASSERT(moat_object_add_string_value(new_if,
-				      "ipv6Address",
-				      sse_string_get_cstr(in_ipv6_address),
-				      sse_string_get_length(in_ipv6_address),
-				      sse_true,
-				      sse_false) == SSE_E_OK);
+  if (in_ipv4_address) {
+    ASSERT(moat_object_add_string_value(new_if,
+					"ipv4Address",
+					sse_string_get_cstr(in_ipv4_address),
+					sse_string_get_length(in_ipv4_address),
+					sse_true,
+					sse_false) == SSE_E_OK);
+  }
+  if (in_netmask) {
+    ASSERT(moat_object_add_string_value(new_if,
+					"netmask",
+					sse_string_get_cstr(in_netmask),
+					sse_string_get_length(in_netmask),
+					sse_true,
+					sse_false) == SSE_E_OK);
+  }
+  if (in_ipv6_address) {
+    ASSERT(moat_object_add_string_value(new_if,
+					"ipv6Address",
+					sse_string_get_cstr(in_ipv6_address),
+					sse_string_get_length(in_ipv6_address),
+					sse_true,
+					sse_false) == SSE_E_OK);
+  }
 
   ASSERT((new_if_value = moat_value_new_object(new_if, sse_false)));
   ASSERT((ifs = sse_slist_add(ifs, new_if_value)));

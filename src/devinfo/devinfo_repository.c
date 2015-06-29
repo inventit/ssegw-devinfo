@@ -149,7 +149,7 @@ DEVINFORepository_GetDevinfo(MoatObject* in_object,
 
   value = moat_object_get_value(in_object, key);
   if (value == NULL) {
-    LOG_ERROR("key = [%s] was not found.", key);
+    LOG_DEBUG("key = [%s] was not found.", key);
     sse_free(key);
     return SSE_E_NOENT;
   }

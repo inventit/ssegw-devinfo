@@ -665,8 +665,55 @@ sse_int
 TDEVINFORepository_AddHardwareNetworkNameserver(TDEVINFORepository* self,
 						SSEString* in_nameserver)
 {
-  //@TODO Not implemented yet.
-  return SSE_E_GENERIC;
+  sse_int err;
+  SSEString* key;
+  MoatValue* value = NULL;
+  SSESList* nameserver_list = NULL;
+  MoatValue* new_nameserver_value;
+
+  ASSERT(self);
+  ASSERT(in_nameserver);
+
+  key= sse_string_new("hardware.network.nameserver");
+  ASSERT(key);
+
+  err = TDEVINFORepository_GetDevinfo(self, key, &value);
+  if (err == SSE_E_OK) {
+    LOG_DEBUG("Add new if into the existing list.");
+    if (moat_value_get_type(value) != MOAT_VALUE_TYPE_LIST) {
+      LOG_ERROR("MoatValue type of interface is not LSIT type.");
+      sse_string_free(key, sse_true);
+      return SSE_E_GENERIC;
+    }
+    err = moat_value_get_list(value, &nameserver_list);
+    if (err != SSE_E_OK) {
+      LOG_ERROR("");
+      sse_string_free(key, sse_true);
+      return err;
+    }
+  } else if (err == SSE_E_NOENT) {
+    LOG_DEBUG("Add new if into the empty list.");
+    value = NULL;
+    nameserver_list = NULL;
+  } else {
+    LOG_ERROR("TDEVINFORepository_GetDevinfo() ... failed with [%d].", err);
+    sse_string_free(key, sse_true);
+    return err;
+  }
+
+  ASSERT((new_nameserver_value = moat_value_new_string(sse_string_get_cstr(in_nameserver),
+						       sse_string_get_length(in_nameserver),
+						       sse_true)));
+  ASSERT((nameserver_list = sse_slist_add(nameserver_list, new_nameserver_value)));
+
+  if (value == NULL) {
+    value = moat_value_new_list(nameserver_list, sse_false);
+    ASSERT(value);
+  }
+  err = TDEVINFORepository_SetDevinfo(self, key, value);
+  sse_string_free(key, sse_true);
+  moat_value_free(value);
+  return err;
 }
 
 

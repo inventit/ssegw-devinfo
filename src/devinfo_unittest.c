@@ -309,7 +309,6 @@ test_devinfo_repository__add_all_items(Moat in_moat)
 	sse_string_free(if_ipv6addr, sse_true);
       }
       { // Nameserver
-#if 0 // Not implemented yet
 	// Server 1
 	ASSERT((item = sse_string_new("222.146.35.1")) != NULL);
 	ASSERT(TDEVINFORepository_AddHardwareNetworkNameserver(&repo, item) == SSE_E_OK);
@@ -319,7 +318,6 @@ test_devinfo_repository__add_all_items(Moat in_moat)
 	ASSERT((item = sse_string_new("221.184.25.1")) != NULL);
 	ASSERT(TDEVINFORepository_AddHardwareNetworkNameserver(&repo, item) == SSE_E_OK);
 	sse_string_free(item, sse_true);
-#endif
       }
     }
     { // SIM

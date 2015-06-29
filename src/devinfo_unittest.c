@@ -323,7 +323,6 @@ test_devinfo_repository__add_all_items(Moat in_moat)
       }
     }
     { // SIM
-#if 0 // Not implemented yet
       SSEString* iccid;
       SSEString* imsi;
       SSEString* msisdn;
@@ -338,14 +337,9 @@ test_devinfo_repository__add_all_items(Moat in_moat)
       sse_string_free(msisdn, sse_true);
 
       // SIM 2
-      ASSERT((iccid = sse_string_new("000000000000000000000")));
-      ASSERT((imsi = sse_string_new("111111111111111")));
-      ASSERT((msisdn = sse_string_new("22222222222")));
-      ASSERT(TDEVINFORepository_AddHardwareSim(&repo, iccid, imsi, msisdn) == SSE_E_OK);
-      sse_string_free(iccid, sse_true);
-      sse_string_free(imsi, sse_true);
+      ASSERT((msisdn = sse_string_new("08056781234")));
+      ASSERT(TDEVINFORepository_AddHardwareSim(&repo, NULL, NULL, msisdn) == SSE_E_OK);
       sse_string_free(msisdn, sse_true);
-#endif
     }
     { // Software
       { // OS
@@ -384,7 +378,7 @@ test_devinfo_repository__add_all_items(Moat in_moat)
   sse_string_free(json, sse_true);
   sse_free(json_cstr);
 
-  return TEST_RESULT_SUCCESS;
+  return TEST_RESULT_UNKNOWN;
 }
 
 static void

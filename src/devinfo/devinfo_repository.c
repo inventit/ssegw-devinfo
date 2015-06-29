@@ -640,7 +640,7 @@ TDEVINFORepository_AddHadwareNetworkInterface(TDEVINFORepository* self,
 				      sse_true,
 				      sse_false) == SSE_E_OK);
 
-  new_if_value = moat_value_new_object(new_if, sse_false);
+  ASSERT((new_if_value = moat_value_new_object(new_if, sse_false)));
   ASSERT((ifs = sse_slist_add(ifs, new_if_value)));
 
   if (value == NULL) {
@@ -650,10 +650,7 @@ TDEVINFORepository_AddHadwareNetworkInterface(TDEVINFORepository* self,
   err = TDEVINFORepository_SetDevinfo(self, key, value);
   sse_string_free(key, sse_true);
   moat_value_free(value);
-  if (err != SSE_E_OK) {
-    return err;
-  }
-  return SSE_E_OK;
+  return err;
 }
 
 sse_int
@@ -688,8 +685,79 @@ TDEVINFORepository_AddHardwareSim(TDEVINFORepository* self,
 				  SSEString* in_imsi,
 				  SSEString* in_msisdn)
 {
-  //@TODO Not implemented yet.
-  return SSE_E_GENERIC;
+  sse_int err;
+  SSEString* key;
+  MoatValue* value = NULL;
+  SSESList* sim_list = NULL;
+  MoatObject* new_sim;
+  MoatValue* new_sim_value;
+
+  ASSERT(self);
+
+  key= sse_string_new("hardware.sim");
+  ASSERT(key);
+
+  err = TDEVINFORepository_GetDevinfo(self, key, &value);
+  if (err == SSE_E_OK) {
+    LOG_DEBUG("Add new if into the existing list.");
+    if (moat_value_get_type(value) != MOAT_VALUE_TYPE_LIST) {
+      LOG_ERROR("MoatValue type of interface is not LSIT type.");
+      sse_string_free(key, sse_true);
+      return SSE_E_GENERIC;
+    }
+    err = moat_value_get_list(value, &sim_list);
+    if (err != SSE_E_OK) {
+      LOG_ERROR("");
+      sse_string_free(key, sse_true);
+      return err;
+    }
+  } else if (err == SSE_E_NOENT) {
+    LOG_DEBUG("Add new if into the empty list.");
+    value = NULL;
+    sim_list = NULL;
+  } else {
+    LOG_ERROR("TDEVINFORepository_GetDevinfo() ... failed with [%d].", err);
+    sse_string_free(key, sse_true);
+    return err;
+  }
+
+  ASSERT((new_sim = moat_object_new()));
+  if (in_iccid) {
+    ASSERT(moat_object_add_string_value(new_sim,
+					"iccid",
+					sse_string_get_cstr(in_iccid),
+					sse_string_get_length(in_iccid),
+					sse_true,
+					sse_false) == SSE_E_OK);
+  }
+  if (in_imsi) {
+    ASSERT(moat_object_add_string_value(new_sim,
+					"imsi",
+					sse_string_get_cstr(in_imsi),
+					sse_string_get_length(in_imsi),
+					sse_true,
+					sse_false) == SSE_E_OK);
+  }
+  if (in_msisdn) {
+    ASSERT(moat_object_add_string_value(new_sim,
+					"msisdn",
+					sse_string_get_cstr(in_msisdn),
+					sse_string_get_length(in_msisdn),
+					sse_true,
+					sse_false) == SSE_E_OK);
+  }
+
+  ASSERT((new_sim_value = moat_value_new_object(new_sim, sse_false)));
+  ASSERT((sim_list = sse_slist_add(sim_list, new_sim_value)));
+
+  if (value == NULL) {
+    value = moat_value_new_list(sim_list, sse_false);
+    ASSERT(value);
+  }
+  err = TDEVINFORepository_SetDevinfo(self, key, value);
+  sse_string_free(key, sse_true);
+  moat_value_free(value);
+  return err;
 }
 
 

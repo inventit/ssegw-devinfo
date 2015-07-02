@@ -118,6 +118,7 @@ TDEVINFORepository_GetDevinfoWithJson(TDEVINFORepository* self,
     err = moat_object_to_json_string(self->fDevinfo, json_string, &json_len);
     if (err != SSE_E_OK) {
       LOG_ERROR("moat_object_to_json_string() ... failed with [%d]", err);
+      sse_free(json_string);
       return err;
     }
 

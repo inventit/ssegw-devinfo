@@ -19,7 +19,7 @@
 #include <devinfo/devinfo.h>
 #include <sseutils.h>
 
-#define TAG "Devinfo:"
+#define TAG "Devinfo"
 #define LOG_ERROR(format, ...) MOAT_LOG_ERROR(TAG, format, ##__VA_ARGS__)
 #define LOG_WARN(format, ...)  MOAT_LOG_WARN(TAG, format, ##__VA_ARGS__)
 #define LOG_INFO(format, ...)  MOAT_LOG_INFO(TAG, format, ##__VA_ARGS__)
@@ -189,8 +189,18 @@ TDEVINFORepository_GetDevinfo(TDEVINFORepository* self,
   ASSERT(in_key);
   ASSERT(out_value);
 
-  ASSERT((key = sse_string_split(in_key, ".", 0)));
+  key = sse_string_split(in_key, ".", 0);
+  ASSERT(key);
+
+
   err = DEVINFORepository_GetDevinfo(self->fDevinfo, key, out_value);
+  if (err != SSE_E_OK) {
+    if (err == SSE_E_NOENT) {
+      LOG_DEBUG("No such entry."); /*TODO: print key name */
+    } else {
+      LOG_ERROR("DEVINFORepository_GetDevinfo() ... failed with [%d].", err);
+    }
+  }
 
   while (key) {
     elem = key;
@@ -325,13 +335,12 @@ TDEVINFORepository_SetHardwarePlatformProduct(TDEVINFORepository* self,
 				sse_true);
 
   err = TDEVINFORepository_SetDevinfo(self, key, value);
+  if (err != SSE_E_OK) {
+    LOG_ERROR("TDEVINFORepository_SetDevinfo() ... failed with [%d]", err);
+  }
   sse_string_free(key, sse_true);
   moat_value_free(value);
-
-  if (err != SSE_E_OK) {
-    return err;
-  }
-  return SSE_E_OK;
+  return err;
 }
 
 sse_int
@@ -351,12 +360,12 @@ TDEVINFORepository_SetHardwarePlatformModel(TDEVINFORepository* self,
 				sse_true);
 
   err = TDEVINFORepository_SetDevinfo(self, key, value);
+  if (err != SSE_E_OK) {
+    LOG_ERROR("TDEVINFORepository_SetDevinfo() ... failed with [%d].", err); 
+  }
   sse_string_free(key, sse_true);
   moat_value_free(value);
-  if (err != SSE_E_OK) {
-    return err;
-  }
-  return SSE_E_OK;
+  return err;
 }
 
 sse_int
@@ -376,12 +385,12 @@ TDEVINFORepository_SetHardwarePlatformSerial(TDEVINFORepository* self,
 				sse_true);
 
   err = TDEVINFORepository_SetDevinfo(self, key, value);
+  if (err != SSE_E_OK) {
+    LOG_ERROR("TDEVINFORepository_SetDevinfo() ... failed with [%d].", err);
+  }
   sse_string_free(key, sse_true);
   moat_value_free(value);
-  if (err != SSE_E_OK) {
-    return err;
-  }
-  return SSE_E_OK;
+  return err;
 }
 
 sse_int
@@ -401,12 +410,12 @@ TDEVINFORepository_SetHardwarePlatformHwVersion(TDEVINFORepository* self,
 				sse_true);
 
   err = TDEVINFORepository_SetDevinfo(self, key, value);
+  if (err != SSE_E_OK) {
+    LOG_ERROR("TDEVINFORepository_SetDevinfo() ... failed with [%d].", err);
+  }
   sse_string_free(key, sse_true);
   moat_value_free(value);
-  if (err != SSE_E_OK) {
-    return err;
-  }
-  return SSE_E_OK;
+  return err;
 }
 
 sse_int
@@ -426,12 +435,12 @@ TDEVINFORepository_SetHardwarePlatformFwVersion(TDEVINFORepository* self,
 				sse_true);
 
   err = TDEVINFORepository_SetDevinfo(self, key, value);
+  if (err != SSE_E_OK) {
+    LOG_ERROR("TDEVINFORepository_SetDevinfo() ... failed with [%d].", err);
+  }
   sse_string_free(key, sse_true);
   moat_value_free(value);
-  if (err != SSE_E_OK) {
-    return err;
-  }
-  return SSE_E_OK;
+  return err;
 }
 
 sse_int
@@ -451,12 +460,12 @@ TDEVINFORepository_SetHardwarePlatformDeviceId(TDEVINFORepository* self,
 				sse_true);
 
   err = TDEVINFORepository_SetDevinfo(self, key, value);
+  if (err != SSE_E_OK) {
+    LOG_ERROR("TDEVINFORepository_SetDevinfo() ... failed with [%d].", err);
+  }
   sse_string_free(key, sse_true);
   moat_value_free(value);
-  if (err != SSE_E_OK) {
-    return err;
-  }
-  return SSE_E_OK;
+  return err;
 }
 
 sse_int
@@ -476,12 +485,12 @@ TDEVINFORepository_SetHardwarePlatformCategory(TDEVINFORepository* self,
 				sse_true);
 
   err = TDEVINFORepository_SetDevinfo(self, key, value);
+  if (err != SSE_E_OK) {
+    LOG_ERROR("TDEVINFORepository_SetDevinfo() ... failed with [%d].", err);
+  }
   sse_string_free(key, sse_true);
   moat_value_free(value);
-  if (err != SSE_E_OK) {
-    return err;
-  }
-  return SSE_E_OK;
+  return err;
 }
 
 sse_int
@@ -501,12 +510,12 @@ TDEVINFORepository_SetHardwareModemType(TDEVINFORepository* self,
 				sse_true);
 
   err = TDEVINFORepository_SetDevinfo(self, key, value);
+  if (err != SSE_E_OK) {
+    LOG_ERROR("TDEVINFORepository_SetDevinfo() ... failed with [%d].", err);
+  }
   sse_string_free(key, sse_true);
   moat_value_free(value);
-  if (err != SSE_E_OK) {
-    return err;
-  }
-  return SSE_E_OK;
+  return err;
 }
 
 
@@ -527,12 +536,12 @@ TDEVINFORepository_SetHardwareModemHwVersion(TDEVINFORepository* self,
 				sse_true);
 
   err = TDEVINFORepository_SetDevinfo(self, key, value);
+  if (err != SSE_E_OK) {
+    LOG_ERROR("TDEVINFORepository_SetDevinfo() ... failed with [%d].", err);
+  }
   sse_string_free(key, sse_true);
   moat_value_free(value);
-  if (err != SSE_E_OK) {
-    return err;
-  }
-  return SSE_E_OK;
+  return err;
 }
 
 sse_int
@@ -552,12 +561,12 @@ TDEVINFORepository_SetHardwareModemFwVersion(TDEVINFORepository* self,
 				sse_true);
 
   err = TDEVINFORepository_SetDevinfo(self, key, value);
+  if (err != SSE_E_OK) {
+    LOG_ERROR("TDEVINFORepository_SetDevinfo() ... failed with [%d].", err);
+  }
   sse_string_free(key, sse_true);
   moat_value_free(value);
-  if (err != SSE_E_OK) {
-    return err;
-  }
-  return SSE_E_OK;
+  return err;
 }
 
 sse_int
@@ -592,7 +601,7 @@ TDEVINFORepository_AddHadwareNetworkInterface(TDEVINFORepository* self,
     }
     err = moat_value_get_list(value, &ifs);
     if (err != SSE_E_OK) {
-      LOG_ERROR("");
+      LOG_ERROR("moat_value_get_list() ... failed with [%d].", err);
       sse_string_free(key, sse_true);
       return err;
     }
@@ -606,52 +615,65 @@ TDEVINFORepository_AddHadwareNetworkInterface(TDEVINFORepository* self,
     return err;
   }
 
-  ASSERT((new_if = moat_object_new()));
-  ASSERT(moat_object_add_string_value(new_if,
-				      "name",
-				      sse_string_get_cstr(in_name),
-				      sse_string_get_length(in_name),
-				      sse_true,
-				      sse_false) == SSE_E_OK);
-  ASSERT(moat_object_add_string_value(new_if,
-				      "hwAddress",
-				      sse_string_get_cstr(in_hw_address),
-				      sse_string_get_length(in_hw_address),
-				      sse_true,
-				      sse_false) == SSE_E_OK);
+  new_if = moat_object_new();
+  ASSERT(new_if);
+
+  err = moat_object_add_string_value(new_if,
+				     "name",
+				     sse_string_get_cstr(in_name),
+				     sse_string_get_length(in_name),
+				     sse_true,
+				     sse_false);
+  ASSERT(err == SSE_E_OK);
+  err = moat_object_add_string_value(new_if,
+				     "hwAddress",
+				     sse_string_get_cstr(in_hw_address),
+				     sse_string_get_length(in_hw_address),
+				     sse_true,
+				     sse_false);
+  ASSERT(err == SSE_E_OK);
   if (in_ipv4_address) {
-    ASSERT(moat_object_add_string_value(new_if,
-					"ipv4Address",
-					sse_string_get_cstr(in_ipv4_address),
-					sse_string_get_length(in_ipv4_address),
-					sse_true,
-					sse_false) == SSE_E_OK);
+    err = moat_object_add_string_value(new_if,
+				       "ipv4Address",
+				       sse_string_get_cstr(in_ipv4_address),
+				       sse_string_get_length(in_ipv4_address),
+				       sse_true,
+				       sse_false);
+    ASSERT(err == SSE_E_OK);
   }
   if (in_netmask) {
-    ASSERT(moat_object_add_string_value(new_if,
-					"netmask",
-					sse_string_get_cstr(in_netmask),
-					sse_string_get_length(in_netmask),
-					sse_true,
-					sse_false) == SSE_E_OK);
+    err= moat_object_add_string_value(new_if,
+				      "netmask",
+				      sse_string_get_cstr(in_netmask),
+				      sse_string_get_length(in_netmask),
+				      sse_true,
+				      sse_false);
+    ASSERT(err == SSE_E_OK);
   }
   if (in_ipv6_address) {
-    ASSERT(moat_object_add_string_value(new_if,
-					"ipv6Address",
-					sse_string_get_cstr(in_ipv6_address),
-					sse_string_get_length(in_ipv6_address),
-					sse_true,
-					sse_false) == SSE_E_OK);
+    err = moat_object_add_string_value(new_if,
+				       "ipv6Address",
+				       sse_string_get_cstr(in_ipv6_address),
+				       sse_string_get_length(in_ipv6_address),
+				       sse_true,
+				       sse_false);
+    ASSERT(err == SSE_E_OK);
   }
 
-  ASSERT((new_if_value = moat_value_new_object(new_if, sse_false)));
-  ASSERT((ifs = sse_slist_add(ifs, new_if_value)));
+  new_if_value = moat_value_new_object(new_if, sse_false);
+  ASSERT(new_if_value);
+
+  ifs = sse_slist_add(ifs, new_if_value);
+  ASSERT(ifs);
 
   if (value == NULL) {
     value = moat_value_new_list(ifs, sse_false);
     ASSERT(value);
   }
   err = TDEVINFORepository_SetDevinfo(self, key, value);
+  if (err != SSE_E_OK) {
+    LOG_ERROR("TDEVINFORepository_SetDevinfo() ... failed with [%d].", err);
+  }
   sse_string_free(key, sse_true);
   moat_value_free(value);
   return err;
@@ -705,16 +727,22 @@ TDEVINFORepository_AddHardwareNetworkNameserver(TDEVINFORepository* self,
     return err;
   }
 
-  ASSERT((new_nameserver_value = moat_value_new_string(sse_string_get_cstr(in_nameserver),
-						       sse_string_get_length(in_nameserver),
-						       sse_true)));
-  ASSERT((nameserver_list = sse_slist_add(nameserver_list, new_nameserver_value)));
+  new_nameserver_value = moat_value_new_string(sse_string_get_cstr(in_nameserver),
+					       sse_string_get_length(in_nameserver),
+					       sse_true);
+  ASSERT(new_nameserver_value);
+
+  nameserver_list = sse_slist_add(nameserver_list, new_nameserver_value);
+  ASSERT(nameserver_list);
 
   if (value == NULL) {
     value = moat_value_new_list(nameserver_list, sse_false);
     ASSERT(value);
   }
   err = TDEVINFORepository_SetDevinfo(self, key, value);
+  if (err != SSE_E_OK) {
+    LOG_ERROR("TDEVINFORepository_SetDevinfo() ... failed with [%d].", err);
+  }
   sse_string_free(key, sse_true);
   moat_value_free(value);
   return err;
@@ -772,40 +800,49 @@ TDEVINFORepository_AddHardwareSim(TDEVINFORepository* self,
     return err;
   }
 
-  ASSERT((new_sim = moat_object_new()));
+  new_sim = moat_object_new();
+  ASSERT(new_sim);
   if (in_iccid) {
-    ASSERT(moat_object_add_string_value(new_sim,
-					"iccid",
-					sse_string_get_cstr(in_iccid),
-					sse_string_get_length(in_iccid),
-					sse_true,
-					sse_false) == SSE_E_OK);
+    err = moat_object_add_string_value(new_sim,
+				       "iccid",
+				       sse_string_get_cstr(in_iccid),
+				       sse_string_get_length(in_iccid),
+				       sse_true,
+				       sse_false);
+    ASSERT(err == SSE_E_OK);
   }
   if (in_imsi) {
-    ASSERT(moat_object_add_string_value(new_sim,
-					"imsi",
-					sse_string_get_cstr(in_imsi),
-					sse_string_get_length(in_imsi),
-					sse_true,
-					sse_false) == SSE_E_OK);
+   err = moat_object_add_string_value(new_sim,
+				      "imsi",
+				      sse_string_get_cstr(in_imsi),
+				      sse_string_get_length(in_imsi),
+				      sse_true,
+				      sse_false);
+   ASSERT(err == SSE_E_OK);
   }
   if (in_msisdn) {
-    ASSERT(moat_object_add_string_value(new_sim,
-					"msisdn",
-					sse_string_get_cstr(in_msisdn),
-					sse_string_get_length(in_msisdn),
-					sse_true,
-					sse_false) == SSE_E_OK);
+    err = moat_object_add_string_value(new_sim,
+				       "msisdn",
+				       sse_string_get_cstr(in_msisdn),
+				       sse_string_get_length(in_msisdn),
+				       sse_true,
+				       sse_false);
+    ASSERT(err == SSE_E_OK);
   }
 
-  ASSERT((new_sim_value = moat_value_new_object(new_sim, sse_false)));
-  ASSERT((sim_list = sse_slist_add(sim_list, new_sim_value)));
+  new_sim_value = moat_value_new_object(new_sim, sse_false);
+  ASSERT(new_sim_value);
+  sim_list = sse_slist_add(sim_list, new_sim_value);
+  ASSERT(sim_list);
 
   if (value == NULL) {
     value = moat_value_new_list(sim_list, sse_false);
     ASSERT(value);
   }
   err = TDEVINFORepository_SetDevinfo(self, key, value);
+  if (err != SSE_E_OK) {
+    LOG_ERROR("TDEVINFORepository_SetDevinfo() ... failed with [%d].", err);
+  }
   sse_string_free(key, sse_true);
   moat_value_free(value);
   return err;
@@ -855,12 +892,12 @@ TDEVINFORepository_SetSoftwareOS(TDEVINFORepository* self,
 				sse_true);
 
   err = TDEVINFORepository_SetDevinfo(self, key, value);
+  if (err != SSE_E_OK) {
+    LOG_ERROR("TDEVINFORepository_SetDevinfo() ... failed with [%d].", err);
+  }
   sse_string_free(key, sse_true);
   moat_value_free(value);
-  if (err != SSE_E_OK) {
-    return err;
-  }
-  return SSE_E_OK;
+  return err;
 }
 
 
@@ -898,12 +935,12 @@ TDEVINFORepository_SetSoftwareSscl(TDEVINFORepository* self,
 				sse_true);
 
   err = TDEVINFORepository_SetDevinfo(self, key, value);
+  sse_string_free(key, sse_true);
+  moat_value_free(value);
   if (err != SSE_E_OK) {
-    sse_string_free(key, sse_true);
-    moat_value_free(value);
+    LOG_ERROR("TDEVINFORepository_SetDevinfo() ... failed with [%d].", err);
     return err;
   }
-  sse_string_free(key, sse_true);
 
   key = sse_string_new("software.sscl.sdkVersion");
   value = moat_value_new_string(sse_string_get_cstr(in_sdk_version),
@@ -914,8 +951,8 @@ TDEVINFORepository_SetSoftwareSscl(TDEVINFORepository* self,
   sse_string_free(key, sse_true);
   moat_value_free(value);
   if (err != SSE_E_OK) {
-    return err;
+    LOG_ERROR("TDEVINFORepository_SetDevinfo() ... failed with [%d].", err);
   }
-  return SSE_E_OK;
+  return err;
 }
 

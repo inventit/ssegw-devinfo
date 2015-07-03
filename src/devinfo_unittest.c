@@ -2,7 +2,7 @@
 #include <assert.h>
 #include <setjmp.h>
 #include <servicesync/moat.h>
-#include <devinfo/devinfo_repository.h>
+#include <devinfo/devinfo.h>
 #include <sseutils.h>
 
 jmp_buf g_env;
@@ -389,6 +389,63 @@ test_devinfo_repository__add_all_items(Moat in_moat)
   return TEST_RESULT_UNKNOWN;
 }
 
+void
+test_devinfo_collector_get_hardware_vendor_callback(MoatObject* in_collected, sse_pointer in_user_data, sse_int in_error_code)
+{
+  MoatObject *object = (MoatObject *)in_collected;
+  sse_char *vendor;
+  sse_uint vendor_len;
+  sse_char* expected = "Unknown";
+
+  ASSERT(in_collected);
+  ASSERT(in_error_code == SSE_E_OK);
+
+  ASSERT(moat_object_get_string_value(object, DEVINFO_KEY_VENDOR, &vendor, &vendor_len) == SSE_E_OK);
+  ASSERT(sse_strlen(expected) == vendor_len);
+  ASSERT(sse_memcmp(expected, vendor, vendor_len) == 0);
+
+  LOG_PRINT("%s ... Success\n", __FUNCTION__);
+}
+
+static sse_int
+test_devinfo_collector_get_hardware_vendor(Moat in_moat)
+{
+  TDEVINFOCollector collector;
+  ASSERT(TDEVINFOCollector_Initialize(&collector, in_moat) == SSE_E_OK);
+  ASSERT(TDEVINFOCollector_GetHardwarePlatformVendor(&collector, test_devinfo_collector_get_hardware_vendor_callback, NULL) == SSE_E_OK);
+
+  return TEST_RESULT_UNKNOWN;
+}
+
+void
+test_devinfo_collector_get_hardware_network_interface_callback(MoatObject* in_collected, sse_pointer in_user_data, sse_int in_error_code)
+{
+  MoatObject *object = (MoatObject *)in_collected;
+  SSESList *list;
+  sse_char* expected = "Unknown";
+
+  ASSERT(in_collected);
+  ASSERT(in_error_code == SSE_E_OK);
+
+  ASSERT(moat_object_get_list_value(object, DEVINFO_KEY_NET_INTERFACE, &list) == SSE_E_OK);
+  LOG_PRINT("List len = [%d]", sse_slist_length(list));
+  while (list) {
+    MoatObject* interface = sse_slist_data(list);
+    SseUtilMoatObjectDump(interface);
+    list = sse_slist_next(list);
+  }
+}
+
+static sse_int
+test_devinfo_collector_get_hardware_network_interface(Moat in_moat)
+{
+  TDEVINFOCollector collector;
+  ASSERT(TDEVINFOCollector_Initialize(&collector, in_moat) == SSE_E_OK);
+  ASSERT(TDEVINFOCollector_GetHadwareNetworkInterface(&collector, test_devinfo_collector_get_hardware_network_interface_callback, NULL) == SSE_E_OK);
+
+  return TEST_RESULT_UNKNOWN;
+}
+
 static void
 test_report(void)
 {
@@ -411,6 +468,8 @@ moat_app_main(sse_int in_argc, sse_char *argv[])
 	DO_TEST(test_devinfo_repository__overwrite_vendor(moat));
 	DO_TEST(test_devinfo_repository__add_interfaces(moat));
 	DO_TEST(test_devinfo_repository__add_all_items(moat));
+	DO_TEST(test_devinfo_collector_get_hardware_vendor(moat));
+	DO_TEST(test_devinfo_collector_get_hardware_network_interface(moat));
 
 	test_report();
 

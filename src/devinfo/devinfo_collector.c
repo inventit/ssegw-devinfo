@@ -31,6 +31,14 @@
 #define LOG_TRACE(format, ...) MOAT_LOG_TRACE(TAG, format, ##__VA_ARGS__)
 #include <stdlib.h>
 #define ASSERT(cond) if(!(cond)) { LOG_ERROR("ASSERTION FAILED:" #cond); abort(); }
+#define LOG_DEBUG_SSESTRING(label, str) {				\
+    sse_char buff[32];							\
+    sse_uint len = (sizeof(buff) - 1 < sse_string_get_length(str) ? sizeof(buff) - 1 : sse_string_get_length(str)); \
+    sse_strncpy(buff, sse_string_get_cstr(str), len);			\
+    buff[len] = '\0';							\
+    LOG_DEBUG(#label " = [%s]", buff);					\
+  }
+
 
 static void
 DEVINFOCollector_FreeListedSSEString(SSESList *in_list)
@@ -40,19 +48,6 @@ DEVINFOCollector_FreeListedSSEString(SSESList *in_list)
     i = in_list;
     in_list = sse_slist_unlink(in_list, i);
     sse_string_free(sse_slist_data(i), sse_true);
-    sse_slist_free(i);
-  }
-}
-
-static void
-DEVINFOCollector_FreeListedMoatObject(SSESList *in_list)
-{
-  SSESList *i;
-  while (in_list) {
-    i = in_list;
-    in_list = sse_slist_unlink(in_list, i);
-    LOG_DEBUG("list=[%p], data=[%p]", i, sse_slist_data(i));
-    moat_object_free(sse_slist_data(i));
     sse_slist_free(i);
   }
 }
@@ -368,9 +363,8 @@ TDEVINFOCollector_GetHardwareModemFwVersion(TDEVINFOCollector* self,
   return TDEVINFOCollector_ReturnDefaultValue(self, in_callback, in_user_data, DEVINFO_KEY_MODEM_FW_VERSION, "Unknown");
 }
 
-static SSESList*
-DEVINFOCollector_AddHadwareNetworkInterface(SSESList* in_list,
-					    SSEString* in_ifname)
+static MoatObject*
+DEVINFOCollector_GetNetworkConfiguration(SSEString* in_ifname)
 {
   sse_int err;
   MoatObject *object = NULL;
@@ -378,7 +372,6 @@ DEVINFOCollector_AddHadwareNetworkInterface(SSESList* in_list,
   SSEString *ipv4_addr = NULL;
   SSEString *netmask = NULL;
   SSEString *ipv6_addr = NULL;
-  SSESList *list = NULL;
 
   ASSERT(in_ifname);
 
@@ -391,13 +384,7 @@ DEVINFOCollector_AddHadwareNetworkInterface(SSESList* in_list,
     LOG_ERROR("moat_object_add_string_value() ... failed with [%s].", err);
     goto error_exit;
   }
-  { /* DEBUG */
-    sse_char buff[32];
-    sse_uint len = sizeof(buff) - 1 < sse_string_get_length(in_ifname) ? sizeof(buff) - 1 : sse_string_get_length(in_ifname);
-    sse_strncpy(buff, sse_string_get_cstr(in_ifname), len);
-    buff[len] = '\0';
-    LOG_DEBUG("I/F name = [%s]", buff);
-  }
+  LOG_DEBUG_SSESTRING("I/F name", in_ifname);
 
   /* Set MAC Address */
   err = SseUtilNetInfo_GetHwAddress(in_ifname, &hw_addr);
@@ -405,13 +392,8 @@ DEVINFOCollector_AddHadwareNetworkInterface(SSESList* in_list,
     LOG_ERROR("SseUtilNetInfo_GetHwAddress() ... failed with [%s].", err);
     goto error_exit;
   }
-  { /* DEBUG */
-    sse_char buff[32];
-    sse_uint len = sizeof(buff) - 1 < sse_string_get_length(hw_addr) ? sizeof(buff) - 1 : sse_string_get_length(hw_addr);
-    sse_strncpy(buff, sse_string_get_cstr(hw_addr), len);
-    buff[len] = '\0';
-    LOG_DEBUG("MAC Address = [%s]", buff);
-  }
+  LOG_DEBUG_SSESTRING("MAC address", hw_addr);
+
   err = moat_object_add_string_value(object, "hwAddress", sse_string_get_cstr(hw_addr), sse_string_get_length(hw_addr), sse_true, sse_false);
   sse_string_free(hw_addr, sse_true);
   if (err != SSE_E_OK) {
@@ -422,13 +404,7 @@ DEVINFOCollector_AddHadwareNetworkInterface(SSESList* in_list,
   /* Set IPv4 Address */
   err = SseUtilNetInfo_GetIPv4Address(in_ifname, &ipv4_addr);
   if (err == SSE_E_OK) {
-    { /* DEBUG */
-      sse_char buff[32];
-      sse_uint len = sizeof(buff) - 1 < sse_string_get_length(ipv4_addr) ? sizeof(buff) - 1 : sse_string_get_length(ipv4_addr);
-      sse_strncpy(buff, sse_string_get_cstr(ipv4_addr), len);
-      buff[len] = '\0';
-      LOG_DEBUG("IPv4 Address = [%s]", buff);
-    }
+    LOG_DEBUG_SSESTRING("IPv4 address", ipv4_addr);
     err = moat_object_add_string_value(object, "ipv4Address", sse_string_get_cstr(ipv4_addr), sse_string_get_length(ipv4_addr), sse_true, sse_false);
     sse_string_free(ipv4_addr, sse_true);
     if (err != SSE_E_OK) {
@@ -442,13 +418,7 @@ DEVINFOCollector_AddHadwareNetworkInterface(SSESList* in_list,
   /* Set netmask */
   err = SseUtilNetInfo_GetIPv4Netmask(in_ifname, &netmask);
   if (err == SSE_E_OK) {
-    { /* DEBUG */
-      sse_char buff[32];
-      sse_uint len = sizeof(buff) - 1 < sse_string_get_length(netmask) ? sizeof(buff) - 1 : sse_string_get_length(netmask);
-      sse_strncpy(buff, sse_string_get_cstr(netmask), len);
-      buff[len] = '\0';
-      LOG_DEBUG("Netmask = [%s]", buff);
-    }
+    LOG_DEBUG_SSESTRING("Netmask", netmask);
     err = moat_object_add_string_value(object, "netmask", sse_string_get_cstr(netmask), sse_string_get_length(netmask), sse_true, sse_false);
     sse_string_free(netmask, sse_true);
     if (err != SSE_E_OK) {
@@ -462,13 +432,7 @@ DEVINFOCollector_AddHadwareNetworkInterface(SSESList* in_list,
   /* Set IPv6 Address */
   err = SseUtilNetInfo_GetIPv6Address(in_ifname, &ipv6_addr);
   if (err == SSE_E_OK) {
-    { /* DEBUG */
-      sse_char buff[32];
-      sse_uint len = sizeof(buff) - 1 < sse_string_get_length(ipv6_addr) ? sizeof(buff) - 1 : sse_string_get_length(ipv6_addr);
-      sse_strncpy(buff, sse_string_get_cstr(ipv6_addr), len);
-      buff[len] = '\0';
-      LOG_DEBUG("IPv6 Address = [%s]", buff);
-    }
+    LOG_DEBUG_SSESTRING("IPv6 address", ipv6_addr);
     err = moat_object_add_string_value(object, "ipv6Address", sse_string_get_cstr(ipv6_addr), sse_string_get_length(ipv6_addr), sse_true, sse_false);
     sse_string_free(ipv6_addr, sse_true);
     if (err != SSE_E_OK) {
@@ -480,9 +444,7 @@ DEVINFOCollector_AddHadwareNetworkInterface(SSESList* in_list,
   }
 
   /* Add object to the list */
-  list = sse_slist_add(in_list, object);
-  ASSERT(list);
-  return list;
+  return object;
 
  error_exit:
   if (object) {
@@ -500,7 +462,6 @@ TDEVINFOCollector_GetHadwareNetworkInterface(TDEVINFOCollector* self,
   MoatObject *object = NULL;
   SSESList *if_list = NULL;
   SSESList *i = NULL;
-  SSESList *info_list = NULL;
 
   LOG_DEBUG("Set callback = [%p] and user data= [%p]", in_callback, in_user_data);
 
@@ -518,43 +479,18 @@ TDEVINFOCollector_GetHadwareNetworkInterface(TDEVINFOCollector* self,
   LOG_DEBUG("Network I/F num = [%d]", sse_slist_length(if_list));
 
   for (i = if_list; i != NULL; i = sse_slist_next(i)) {
-    SSEString *ifname;
-    SSESList *tmp;
+    object = DEVINFOCollector_GetNetworkConfiguration(sse_slist_data(i));
+    ASSERT(object);
 
-    ifname = sse_slist_data(i);
-    ASSERT(ifname);
-    tmp = DEVINFOCollector_AddHadwareNetworkInterface(info_list, ifname);
-    if (tmp == NULL) {
-      LOG_ERROR("DEVINFOCollector_AddHadwareNetworkInterface() ... failed.");
-      goto error_exit;
+    /* Call callback */
+    if (self->fOnGetCallback) {
+      LOG_DEBUG("Call callback = [%p]", self->fOnGetCallback);
+      self->fOnGetCallback(object, self->fUserData, SSE_E_OK);
     }
-    info_list = tmp;
-  }
-
-  object = moat_object_new();
-  ASSERT(object);
-  
-  /* NOTE: In case of using moat_object_add_list_value() with in_dup=FALSE, Valgrind detects
-   *       a invalid memory write, so I use it with in_dup=TRUE as workaround.
-   *       It might be a bug in MOAT C SDK.
-   */
-  err = moat_object_add_list_value(object, DEVINFO_KEY_NET_INTERFACE, info_list, sse_true, sse_false);
-  if (err != SSE_E_OK) {
-    LOG_ERROR("moat_object_add_list_value() ... failed with [%s].", err);
-    goto error_exit;
-  }
-  
-  /* Call callback */
-  self->fStatus = DEVINFO_COLLECTOR_STATUS_PUBLISHING;
-  if (self->fOnGetCallback) {
-    LOG_DEBUG("Call callback = [%p]", self->fOnGetCallback);
-    self->fOnGetCallback(object, self->fUserData, SSE_E_OK);
   }
 
   /* Cleanup */
-  moat_object_free(object);
   DEVINFOCollector_FreeListedSSEString(if_list);
-  DEVINFOCollector_FreeListedMoatObject(info_list);
   self->fStatus = DEVINFO_COLLECTOR_STATUS_COMPLETED;
 
   return SSE_E_OK;
@@ -564,7 +500,6 @@ TDEVINFOCollector_GetHadwareNetworkInterface(TDEVINFOCollector* self,
   self->fStatus = DEVINFO_COLLECTOR_STATUS_ABEND;
   if (object) moat_object_free(object);
   DEVINFOCollector_FreeListedSSEString(if_list);
-  DEVINFOCollector_FreeListedMoatObject(info_list);
   return err;
 }
 

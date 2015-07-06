@@ -421,18 +421,11 @@ void
 test_devinfo_collector_get_hardware_network_interface_callback(MoatObject* in_collected, sse_pointer in_user_data, sse_int in_error_code)
 {
   MoatObject *object = (MoatObject *)in_collected;
-  SSESList *list;
 
   ASSERT(in_collected);
   ASSERT(in_error_code == SSE_E_OK);
 
-  ASSERT(moat_object_get_list_value(object, DEVINFO_KEY_NET_INTERFACE, &list) == SSE_E_OK);
-  LOG_PRINT("List len = [%d]", sse_slist_length(list));
-  while (list) {
-    MoatObject* interface = sse_slist_data(list);
-    SseUtilMoatObjectDump(interface);
-    list = sse_slist_next(list);
-  }
+  SseUtilMoatObjectDump(object);
 }
 
 static sse_int

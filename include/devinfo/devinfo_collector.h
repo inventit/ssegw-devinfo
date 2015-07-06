@@ -125,6 +125,11 @@ TDEVINFOCollector_GetHadwareNetworkNameserver(TDEVINFOCollector* self,
 					      sse_pointer in_user_data);
 
 sse_int
+TDEVINFOCollector_GetHardwareSim(TDEVINFOCollector* self,
+				 DEVINFOCollector_OnGetCallback in_callback,
+				 sse_pointer in_user_data);
+
+sse_int
 TDEVINFOCollector_GetSoftwareOS(TDEVINFOCollector* self,
 				DEVINFOCollector_OnGetCallback in_callback,
 				sse_pointer in_user_data);

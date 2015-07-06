@@ -465,6 +465,27 @@ test_devinfo_collector_get_hardware_network_nameserver(Moat in_moat)
 }
 
 static void
+test_devinfo_collector_get_hardware_sim_callback(MoatObject* in_collected, sse_pointer in_user_data, sse_int in_error_code)
+{
+  MoatObject *object = (MoatObject *)in_collected;
+
+  ASSERT(in_collected);
+  ASSERT(in_error_code == SSE_E_OK);
+
+  SseUtilMoatObjectDump(object);
+}
+
+static sse_int
+test_devinfo_collector_get_hardware_sim(Moat in_moat)
+{
+  TDEVINFOCollector collector;
+  ASSERT(TDEVINFOCollector_Initialize(&collector, in_moat) == SSE_E_OK);
+  ASSERT(TDEVINFOCollector_GetHardwareSim(&collector, test_devinfo_collector_get_hardware_sim_callback, NULL) == SSE_E_OK);
+
+  return TEST_RESULT_UNKNOWN;
+}
+
+static void
 test_report(void)
 {
   LOG_PRINT("Result : success = %d / unknown = %d / failure = %d", g_success, g_unknown,  g_failure);
@@ -489,6 +510,7 @@ moat_app_main(sse_int in_argc, sse_char *argv[])
 	DO_TEST(test_devinfo_collector_get_hardware_vendor(moat));
 	DO_TEST(test_devinfo_collector_get_hardware_network_interface(moat));
 	DO_TEST(test_devinfo_collector_get_hardware_network_nameserver(moat));
+	DO_TEST(test_devinfo_collector_get_hardware_sim(moat));
 
 	err = moat_run(moat);
 	if (err != SSE_E_OK) {

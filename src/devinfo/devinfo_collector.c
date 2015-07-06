@@ -661,6 +661,58 @@ TDEVINFOCollector_GetHadwareNetworkNameserver(TDEVINFOCollector* self,
 }
 
 sse_int
+TDEVINFOCollector_GetHardwareSim(TDEVINFOCollector* self,
+				 DEVINFOCollector_OnGetCallback in_callback,
+				 sse_pointer in_user_data)
+{
+  sse_int err;
+  MoatObject *object = NULL;
+
+  LOG_DEBUG("Set callback = [%p] and user data= [%p]", in_callback, in_user_data);
+
+  ASSERT(self);
+
+  self->fOnGetCallback = in_callback;
+  self->fUserData = in_user_data;
+
+  /* Create MoatObject */
+  object = moat_object_new();
+  ASSERT(object);
+  err = moat_object_add_string_value(object, DEVINFO_KEY_SIM_ICCID, "Unkonwn", sse_strlen("Unkonwn"), sse_true, sse_false); 
+  if (err != SSE_E_OK) {
+    LOG_ERROR("moat_object_set_string_value() ... failed with [%s].", sse_get_error_string(err));
+    goto error_exit;
+  }
+  err = moat_object_add_string_value(object, DEVINFO_KEY_SIM_IMSI, "Unkonwn", sse_strlen("Unkonwn"), sse_true, sse_false); 
+  if (err != SSE_E_OK) {
+    LOG_ERROR("moat_object_set_string_value() ... failed with [%s].", sse_get_error_string(err));
+    goto error_exit;
+  }
+  err = moat_object_add_string_value(object, DEVINFO_KEY_SIM_MSISDN, "Unkonwn", sse_strlen("Unkonwn"), sse_true, sse_false); 
+  if (err != SSE_E_OK) {
+    LOG_ERROR("moat_object_set_string_value() ... failed with [%s].", sse_get_error_string(err));
+    goto error_exit;
+  }
+
+  /* Call callback */
+  self->fStatus = DEVINFO_COLLECTOR_STATUS_PUBLISHING;
+  if(self->fOnGetCallback) {
+    self->fOnGetCallback(object, self->fUserData, err);
+  }
+
+  /* Cleanup */
+  moat_object_free(object);
+  self->fStatus = DEVINFO_COLLECTOR_STATUS_COMPLETED;
+  return SSE_E_OK;
+
+  /* Abnormal end */
+ error_exit:
+  self->fStatus = DEVINFO_COLLECTOR_STATUS_ABEND;
+  if (object) moat_object_free(object);
+  return err;
+}
+
+sse_int
 TDEVINFOCollector_GetSoftwareOS(TDEVINFOCollector* self,
 				DEVINFOCollector_OnGetCallback in_callback,
 				sse_pointer in_user_data)

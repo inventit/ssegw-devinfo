@@ -20,6 +20,7 @@
 #include <string.h>
 #include <errno.h>
 #include <servicesync/moat.h>
+#include <servicesync/sse/sseversion.h> // Workaround
 #include <sseutils.h>
 #include <devinfo/devinfo.h>
 
@@ -803,4 +804,70 @@ TDEVINFOCollector_GetSoftwareOS(TDEVINFOCollector* self,
   return err;
 }
 
+sse_int
+TDEVINFOCollector_GetSoftwareSscl(TDEVINFOCollector* self,
+				  DEVINFOCollector_OnGetCallback in_callback,
+				  sse_pointer in_user_data)
+{
+  sse_int err;
+  const sse_char *sscl_version = NULL;
+  const sse_char *moat_sdk_version = NULL;
+  MoatObject *object = NULL;
 
+  LOG_DEBUG("Set callback = [%p] and user data= [%p]", in_callback, in_user_data);
+
+  ASSERT(self);
+
+  self->fOnGetCallback = in_callback;
+  self->fUserData = in_user_data;
+
+  sscl_version = sse_get_version();
+  ASSERT(sscl_version);
+  moat_sdk_version = sse_get_sdk_version();
+  ASSERT(moat_sdk_version);
+
+  /* Create MoatObject */
+  object = moat_object_new();
+  ASSERT(object);
+  err = moat_object_add_string_value(object, DEVINFO_KEY_SSCL_TYPE, "SSEGW", sse_strlen("SSEGE"), sse_true, sse_false); 
+  if (err != SSE_E_OK) {
+    LOG_ERROR("moat_object_set_string_value() ... failed with [%s].", sse_get_error_string(err));
+    if(self->fOnGetCallback) {
+      self->fOnGetCallback(NULL, self->fUserData, err);
+    }
+    goto error_exit;
+  }
+  err = moat_object_add_string_value(object, DEVINFO_KEY_SSCL_VERSION, (sse_char*)sscl_version, sse_strlen(sscl_version), sse_true, sse_false); 
+  if (err != SSE_E_OK) {
+    LOG_ERROR("moat_object_set_string_value() ... failed with [%s].", sse_get_error_string(err));
+    if(self->fOnGetCallback) {
+      self->fOnGetCallback(NULL, self->fUserData, err);
+    }
+    goto error_exit;
+  }
+  err = moat_object_add_string_value(object, DEVINFO_KEY_SSCL_SDK_VERSION, (sse_char*)moat_sdk_version, sse_strlen(moat_sdk_version), sse_true, sse_false); 
+  if (err != SSE_E_OK) {
+    LOG_ERROR("moat_object_set_string_value() ... failed with [%s].", sse_get_error_string(err));
+    if(self->fOnGetCallback) {
+      self->fOnGetCallback(NULL, self->fUserData, err);
+    }
+    goto error_exit;
+  }
+
+  /* Call callback */
+  self->fStatus = DEVINFO_COLLECTOR_STATUS_PUBLISHING;
+  if(self->fOnGetCallback) {
+    self->fOnGetCallback(object, self->fUserData, err);
+  }
+
+  /* Cleanup */
+  moat_object_free(object);
+  self->fStatus = DEVINFO_COLLECTOR_STATUS_COMPLETED;
+  return SSE_E_OK;
+
+  /* Abnormal end */
+ error_exit:
+  self->fStatus = DEVINFO_COLLECTOR_STATUS_ABEND;
+  if (object) moat_object_free(object);
+  return err;
+}

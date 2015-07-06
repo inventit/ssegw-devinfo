@@ -39,6 +39,9 @@ SSE_BEGIN_C_DECLS
 #define DEVINFO_KEY_SIM_MSISDN "hardware.sim.msisdn"
 #define DEVINFO_KEY_OS_TYPE "software.os.type"
 #define DEVINFO_KEY_OS_VERSION "software.os.version"
+#define DEVINFO_KEY_SSCL_TYPE "software.sscl.type"
+#define DEVINFO_KEY_SSCL_VERSION "software.sscl.version"
+#define DEVINFO_KEY_SSCL_SDK_VERSION "software.sscl.sdkVersion"
 
 #include <devinfo/devinfo_repository.h>
 #include <devinfo/devinfo_collector.h>

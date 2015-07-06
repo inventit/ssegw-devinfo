@@ -134,6 +134,11 @@ TDEVINFOCollector_GetSoftwareOS(TDEVINFOCollector* self,
 				DEVINFOCollector_OnGetCallback in_callback,
 				sse_pointer in_user_data);
 
+sse_int
+TDEVINFOCollector_GetSoftwareSscl(TDEVINFOCollector* self,
+				  DEVINFOCollector_OnGetCallback in_callback,
+				  sse_pointer in_user_data);
+
 SSE_END_C_DECLS
 
 #endif /* __DEVINFO_COLLECTOR_H__ */

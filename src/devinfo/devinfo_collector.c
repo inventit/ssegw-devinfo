@@ -681,16 +681,25 @@ TDEVINFOCollector_GetHardwareSim(TDEVINFOCollector* self,
   err = moat_object_add_string_value(object, DEVINFO_KEY_SIM_ICCID, "Unkonwn", sse_strlen("Unkonwn"), sse_true, sse_false); 
   if (err != SSE_E_OK) {
     LOG_ERROR("moat_object_set_string_value() ... failed with [%s].", sse_get_error_string(err));
+    if(self->fOnGetCallback) {
+      self->fOnGetCallback(NULL, self->fUserData, err);
+    }
     goto error_exit;
   }
   err = moat_object_add_string_value(object, DEVINFO_KEY_SIM_IMSI, "Unkonwn", sse_strlen("Unkonwn"), sse_true, sse_false); 
   if (err != SSE_E_OK) {
     LOG_ERROR("moat_object_set_string_value() ... failed with [%s].", sse_get_error_string(err));
+    if(self->fOnGetCallback) {
+      self->fOnGetCallback(NULL, self->fUserData, err);
+    }
     goto error_exit;
   }
   err = moat_object_add_string_value(object, DEVINFO_KEY_SIM_MSISDN, "Unkonwn", sse_strlen("Unkonwn"), sse_true, sse_false); 
   if (err != SSE_E_OK) {
     LOG_ERROR("moat_object_set_string_value() ... failed with [%s].", sse_get_error_string(err));
+    if(self->fOnGetCallback) {
+      self->fOnGetCallback(NULL, self->fUserData, err);
+    }
     goto error_exit;
   }
 
@@ -735,8 +744,8 @@ TDEVINFOCollector_GetSoftwareOS(TDEVINFOCollector* self,
   if (err != SSE_E_OK) {
     if(self->fOnGetCallback) {
       self->fOnGetCallback(NULL, self->fUserData, err);
-      goto error_exit;
     }
+    goto error_exit;
   }
 
   /* Get OS Version (e.g. 3.2.0-4-amd64) */
@@ -744,8 +753,8 @@ TDEVINFOCollector_GetSoftwareOS(TDEVINFOCollector* self,
   if (err != SSE_E_OK) {
     if(self->fOnGetCallback) {
       self->fOnGetCallback(NULL, self->fUserData, err);
-      goto error_exit;
     }
+    goto error_exit;
   }
 
   /* Create MoatObject */

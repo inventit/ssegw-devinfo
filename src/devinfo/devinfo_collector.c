@@ -36,10 +36,23 @@ static void
 DEVINFOCollector_FreeListedSSEString(SSESList *in_list)
 {
   SSESList *i;
-  if (in_list) {
+  while (in_list) {
     i = in_list;
     in_list = sse_slist_unlink(in_list, i);
     sse_string_free(sse_slist_data(i), sse_true);
+    sse_slist_free(i);
+  }
+}
+
+static void
+DEVINFOCollector_FreeListedMoatObject(SSESList *in_list)
+{
+  SSESList *i;
+  while (in_list) {
+    i = in_list;
+    in_list = sse_slist_unlink(in_list, i);
+    LOG_DEBUG("list=[%p], data=[%p]", i, sse_slist_data(i));
+    moat_object_free(sse_slist_data(i));
     sse_slist_free(i);
   }
 }
@@ -520,13 +533,17 @@ TDEVINFOCollector_GetHadwareNetworkInterface(TDEVINFOCollector* self,
 
   object = moat_object_new();
   ASSERT(object);
-  err = moat_object_add_list_value(object, DEVINFO_KEY_NET_INTERFACE, info_list, sse_false, sse_false);
+  
+  /* NOTE: In case of using moat_object_add_list_value() with in_dup=FALSE, Valgrind detects
+   *       a invalid memory write, so I use it with in_dup=TRUE as workaround.
+   *       It might be a bug in MOAT C SDK.
+   */
+  err = moat_object_add_list_value(object, DEVINFO_KEY_NET_INTERFACE, info_list, sse_true, sse_false);
   if (err != SSE_E_OK) {
     LOG_ERROR("moat_object_add_list_value() ... failed with [%s].", err);
     goto error_exit;
   }
-  info_list = NULL;
-
+  
   /* Call callback */
   self->fStatus = DEVINFO_COLLECTOR_STATUS_PUBLISHING;
   if (self->fOnGetCallback) {
@@ -537,6 +554,7 @@ TDEVINFOCollector_GetHadwareNetworkInterface(TDEVINFOCollector* self,
   /* Cleanup */
   moat_object_free(object);
   DEVINFOCollector_FreeListedSSEString(if_list);
+  DEVINFOCollector_FreeListedMoatObject(info_list);
   self->fStatus = DEVINFO_COLLECTOR_STATUS_COMPLETED;
 
   return SSE_E_OK;
@@ -546,7 +564,7 @@ TDEVINFOCollector_GetHadwareNetworkInterface(TDEVINFOCollector* self,
   self->fStatus = DEVINFO_COLLECTOR_STATUS_ABEND;
   if (object) moat_object_free(object);
   DEVINFOCollector_FreeListedSSEString(if_list);
-  DEVINFOCollector_FreeListedSSEString(info_list);
+  DEVINFOCollector_FreeListedMoatObject(info_list);
   return err;
 }
 

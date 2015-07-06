@@ -422,7 +422,6 @@ test_devinfo_collector_get_hardware_network_interface_callback(MoatObject* in_co
 {
   MoatObject *object = (MoatObject *)in_collected;
   SSESList *list;
-  sse_char* expected = "Unknown";
 
   ASSERT(in_collected);
   ASSERT(in_error_code == SSE_E_OK);

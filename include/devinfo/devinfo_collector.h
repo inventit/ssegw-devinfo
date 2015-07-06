@@ -45,6 +45,7 @@ struct TDEVINFOCollector_ {
   DEVINFOCollectorStatus fStatus;
   DEVINFOCollector_OnGetCallback fOnGetCallback;
   sse_pointer fUserData;
+  TSseUtilShellCommand fCommand;
 };
 typedef struct TDEVINFOCollector_ TDEVINFOCollector;
 
@@ -117,6 +118,11 @@ sse_int
 TDEVINFOCollector_GetHadwareNetworkInterface(TDEVINFOCollector* self,
 					     DEVINFOCollector_OnGetCallback in_callback,
 					     sse_pointer in_user_data);
+
+sse_int
+TDEVINFOCollector_GetHadwareNetworkNameserver(TDEVINFOCollector* self,
+					      DEVINFOCollector_OnGetCallback in_callback,
+					      sse_pointer in_user_data);
 
 sse_int
 TDEVINFOCollector_GetSoftwareOS(TDEVINFOCollector* self,

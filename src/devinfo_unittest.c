@@ -2,8 +2,8 @@
 #include <assert.h>
 #include <setjmp.h>
 #include <servicesync/moat.h>
-#include <devinfo/devinfo.h>
 #include <sseutils.h>
+#include <devinfo/devinfo.h>
 
 jmp_buf g_env;
 sse_int g_success = 0;
@@ -445,6 +445,32 @@ test_devinfo_collector_get_hardware_network_interface(Moat in_moat)
   return TEST_RESULT_UNKNOWN;
 }
 
+void
+test_devinfo_collector_get_hardware_network_nameserver_callback(MoatObject* in_collected, sse_pointer in_user_data, sse_int in_error_code)
+{
+  MoatObject *object = (MoatObject *)in_collected;
+  sse_char *nameserver;
+  sse_uint nameserver_len;
+  sse_char buff[128];
+
+  ASSERT(in_collected);
+  ASSERT(in_error_code == SSE_E_OK);
+  ASSERT(moat_object_get_string_value(object, DEVINFO_KEY_NET_NAMESERVER, &nameserver, &nameserver_len) == SSE_E_OK);
+  sse_strncpy(buff, nameserver, nameserver_len);
+  buff[nameserver_len] = '\0';
+  LOG_PRINT("nameserver=[%s]", buff);
+}
+
+static sse_int
+test_devinfo_collector_get_hardware_network_nameserver(Moat in_moat)
+{
+  TDEVINFOCollector collector;
+  ASSERT(TDEVINFOCollector_Initialize(&collector, in_moat) == SSE_E_OK);
+  ASSERT(TDEVINFOCollector_GetHadwareNetworkNameserver(&collector, test_devinfo_collector_get_hardware_network_nameserver_callback, NULL) == SSE_E_OK);
+
+  return TEST_RESULT_UNKNOWN;
+}
+
 static void
 test_report(void)
 {
@@ -469,6 +495,12 @@ moat_app_main(sse_int in_argc, sse_char *argv[])
 	DO_TEST(test_devinfo_repository__add_all_items(moat));
 	DO_TEST(test_devinfo_collector_get_hardware_vendor(moat));
 	DO_TEST(test_devinfo_collector_get_hardware_network_interface(moat));
+	DO_TEST(test_devinfo_collector_get_hardware_network_nameserver(moat));
+
+	err = moat_run(moat);
+	if (err != SSE_E_OK) {
+	  goto error_exit;
+	}
 
 	test_report();
 

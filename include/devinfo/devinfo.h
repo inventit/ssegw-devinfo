@@ -33,6 +33,7 @@ SSE_BEGIN_C_DECLS
 #define DEVINFO_KEY_MODEM_HW_VERSION "hardware.modem.hwVersion"
 #define DEVINFO_KEY_MODEM_FW_VERSION "hardware.modem.fwVersion"
 #define DEVINFO_KEY_NET_INTERFACE "hardware.network.interface"
+#define DEVINFO_KEY_NET_NAMESERVER "hardware.network.nameserver"
 #define DEVINFO_KEY_OS_TYPE "software.os.type"
 #define DEVINFO_KEY_OS_VERSION "software.os.version"
 

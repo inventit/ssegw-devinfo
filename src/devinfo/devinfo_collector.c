@@ -20,8 +20,8 @@
 #include <string.h>
 #include <errno.h>
 #include <servicesync/moat.h>
-#include <devinfo/devinfo.h>
 #include <sseutils.h>
+#include <devinfo/devinfo.h>
 
 #define TAG "Devinfo"
 #define LOG_ERROR(format, ...) MOAT_LOG_ERROR(TAG, format, ##__VA_ARGS__)
@@ -617,6 +617,111 @@ DEVINFOCollector_GetSoftwareOSVersion(SSEString **out_os_version)
   os_version = sse_string_new(buff);
   ASSERT(os_version);
   *out_os_version = os_version;
+  return SSE_E_OK;
+}
+
+static void
+DEVINFOCollector_GetHadwareNetworkNameserverOnComplateCallback(TSseUtilShellCommand* self,
+							       sse_pointer in_user_data,
+							       sse_int in_result)
+{
+  ASSERT(in_user_data);
+  TDEVINFOCollector *collector = (TDEVINFOCollector *)in_user_data;
+  LOG_INFO("collector=[%p], command=[%s] has been completed.", collector, self->fShellCommand);
+
+  /* Cleanup */
+  collector->fStatus = DEVINFO_COLLECTOR_STATUS_COMPLETED;
+  TSseUtilShellCommand_Finalize(self);
+}
+
+static void
+DEVINFOCollector_GetHadwareNetworkNameserverOnReadCallback(TSseUtilShellCommand* self,
+							    sse_pointer in_user_data)
+{
+  sse_int err;
+  sse_char *buff;
+  MoatObject *object;
+
+  ASSERT(in_user_data);
+  TDEVINFOCollector *collector = (TDEVINFOCollector *)in_user_data;
+  LOG_DEBUG("collector=[%p], command=[%s] is readable.", collector, self->fShellCommand);
+
+  while ((err = TSseUtilShellCommand_ReadLine(self, &buff, sse_true)) == SSE_E_OK) {
+    LOG_DEBUG("nameserver=[%s]", buff);
+    if (sse_strncmp("nameserver", buff, sse_strlen("nameserver")) == 0) {
+      sse_char *p;
+      p = sse_strchr(buff, ' ');
+      if ((p != NULL) && (*(++p) != '\0')) {
+	object = moat_object_new();
+	ASSERT(object);
+
+	err = moat_object_add_string_value(object, DEVINFO_KEY_NET_NAMESERVER, p, sse_strlen(p), sse_true, sse_false);
+	ASSERT(err == SSE_E_OK);
+
+	if(collector->fOnGetCallback) {
+	  collector->fOnGetCallback(object, self->fOnCompletedCallbackUserData, err);
+	}
+	moat_object_free(object);
+      }
+    }
+    sse_free(buff);
+  }
+  if (err != SSE_E_NOENT && err != SSE_E_AGAIN) {
+    LOG_ERROR("TSseUtilShellCommand_ReadLine() ... failed with [%s]", sse_get_error_string(err));
+    if (self->fOnErrorCallback) {
+      self->fOnErrorCallback(self, self->fOnErrorCallbackUserData, err, sse_get_error_string(err));
+    }
+    return;
+  }
+
+  return;
+}
+
+static void
+TDEVINFOCollector_GetHadwareNetworkNameserverOnErrorCallback(TSseUtilShellCommand* self,
+							      sse_pointer in_user_data,
+							      sse_int in_error_code,
+							      const sse_char* in_message)
+{
+  ASSERT(in_user_data);
+  TDEVINFOCollector *collector = (TDEVINFOCollector *)in_user_data;
+
+  LOG_ERROR("collector=[%p], command=[%s] failed with code=[%d], message=[%s]", collector, self->fShellCommand, in_error_code, in_message);
+  collector->fStatus = DEVINFO_COLLECTOR_STATUS_ABEND;
+}
+
+sse_int
+TDEVINFOCollector_GetHadwareNetworkNameserver(TDEVINFOCollector* self,
+					      DEVINFOCollector_OnGetCallback in_callback,
+					      sse_pointer in_user_data)
+{
+  sse_int err;
+
+  ASSERT(self);
+
+  self->fOnGetCallback = in_callback;
+  self->fUserData = in_user_data;
+
+  /* Create command to read /etc/resolv.conf */
+  err = TSseUtilShellCommand_Initialize(&self->fCommand);
+  ASSERT(err == SSE_E_OK);
+  err = TSseUtilShellCommand_SetShellCommand(&self->fCommand, "cat");
+  ASSERT(err == SSE_E_OK);
+  err = TSseUtilShellCommand_AddArgument(&self->fCommand, "/etc/resolv.conf");
+  ASSERT(err == SSE_E_OK);
+
+  /* Set callbacks */
+  err = TSseUtilShellCommand_SetOnComplatedCallback(&self->fCommand, DEVINFOCollector_GetHadwareNetworkNameserverOnComplateCallback, self);
+  ASSERT(err == SSE_E_OK);
+  err = TSseUtilShellCommand_SetOnReadCallback(&self->fCommand, DEVINFOCollector_GetHadwareNetworkNameserverOnReadCallback, self);
+  ASSERT(err == SSE_E_OK);
+  err=  TSseUtilShellCommand_SetOnErrorCallback(&self->fCommand,TDEVINFOCollector_GetHadwareNetworkNameserverOnErrorCallback, self);
+  ASSERT(err == SSE_E_OK);
+
+  self->fStatus = DEVINFO_COLLECTOR_STATUS_COLLECTING;
+  err = TSseUtilShellCommand_Execute(&self->fCommand);
+  ASSERT(err == SSE_E_OK); //TODO fix me.
+
   return SSE_E_OK;
 }
 

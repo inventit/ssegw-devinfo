@@ -16,8 +16,8 @@
  * http://www.yourinventit.com/
  */
 #include <servicesync/moat.h>
-#include <devinfo/devinfo.h>
 #include <sseutils.h>
+#include <devinfo/devinfo.h>
 
 #define TAG "Devinfo"
 #define LOG_ERROR(format, ...) MOAT_LOG_ERROR(TAG, format, ##__VA_ARGS__)

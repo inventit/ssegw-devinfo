@@ -32,6 +32,18 @@
 #include <stdlib.h>
 #define ASSERT(cond) if(!(cond)) { LOG_ERROR("ASSERTION FAILED:" #cond); abort(); }
 
+static void
+DEVINFOCollector_FreeListedSSEString(SSESList *in_list)
+{
+  SSESList *i;
+  if (in_list) {
+    i = in_list;
+    in_list = sse_slist_unlink(in_list, i);
+    sse_string_free(sse_slist_data(i), sse_true);
+    sse_slist_free(i);
+  }
+}
+
 sse_int
 TDEVINFOCollector_Initialize(TDEVINFOCollector* self, Moat in_moat)
 {
@@ -476,7 +488,6 @@ TDEVINFOCollector_GetHadwareNetworkInterface(TDEVINFOCollector* self,
   SSESList *if_list = NULL;
   SSESList *i = NULL;
   SSESList *info_list = NULL;
-  SSESList *info = NULL;
 
   LOG_DEBUG("Set callback = [%p] and user data= [%p]", in_callback, in_user_data);
 
@@ -525,12 +536,7 @@ TDEVINFOCollector_GetHadwareNetworkInterface(TDEVINFOCollector* self,
 
   /* Cleanup */
   moat_object_free(object);
-  if (if_list) {
-    i = if_list;
-    if_list = sse_slist_unlink(if_list, i);
-    sse_string_free(sse_slist_data(i), sse_true);
-    sse_slist_free(i);
-  }
+  DEVINFOCollector_FreeListedSSEString(if_list);
   self->fStatus = DEVINFO_COLLECTOR_STATUS_COMPLETED;
 
   return SSE_E_OK;
@@ -539,18 +545,8 @@ TDEVINFOCollector_GetHadwareNetworkInterface(TDEVINFOCollector* self,
  error_exit:
   self->fStatus = DEVINFO_COLLECTOR_STATUS_ABEND;
   if (object) moat_object_free(object);
-  if (if_list) {
-    i = if_list;
-    if_list = sse_slist_unlink(if_list, i);
-    sse_string_free(sse_slist_data(i), sse_true);
-    sse_slist_free(i);
-  }
-  if (info_list) {
-    info = info_list;
-    info_list = sse_slist_unlink(info_list, info);
-    moat_object_free(sse_slist_data(info));
-    sse_slist_free(info);
-  }
+  DEVINFOCollector_FreeListedSSEString(if_list);
+  DEVINFOCollector_FreeListedSSEString(info_list);
   return err;
 }
 

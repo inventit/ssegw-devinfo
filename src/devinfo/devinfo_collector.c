@@ -83,58 +83,6 @@ TDEVINFOCollector_GetStatus(TDEVINFOCollector* self)
   return self->fStatus;
 }
 
-sse_int
-TDEVINFOCollector_GetHardwarePlatformVendor(TDEVINFOCollector* self,
-					    DEVINFOCollector_OnGetCallback in_callback,
-					    sse_pointer in_user_data)
-{
-  sse_int err;
-  MoatObject *object;
-
-  LOG_WARN("This function should not be called. Concrete function for each gateways should be called.");
-  LOG_DEBUG("Set callback = [%p] and user data= [%p]", in_callback, in_user_data);
-
-  ASSERT(self);
-
-  self->fOnGetCallback = in_callback;
-  self->fUserData = in_user_data;
-
-  /* Create vendor info "Unknown" in stead of collectiong. */
-  self->fStatus = DEVINFO_COLLECTOR_STATUS_COLLECTING;
-  object = moat_object_new();
-  ASSERT(object);
-
-  err = moat_object_add_string_value(object,
-				     DEVINFO_KEY_VENDOR,
-				     "Unknown",
-				     sse_strlen("Unknown"),
-				     sse_true,
-				     sse_false);
-  if (err != SSE_E_OK) {
-    LOG_ERROR("moat_object_add_string_value() ... failed with [%s].", sse_get_error_string(err));
-    goto error_exit;
-  }
-
-  /* Call callback */
-  self->fStatus = DEVINFO_COLLECTOR_STATUS_PUBLISHING;
-  if (self->fOnGetCallback) {
-    LOG_DEBUG("Call callback = [%p]", self->fOnGetCallback);
-    self->fOnGetCallback(object, self->fUserData, SSE_E_OK);
-  }
-
-  /* Cleanup */
-  moat_object_free(object);
-  self->fStatus = DEVINFO_COLLECTOR_STATUS_COMPLETED;
-
-  return SSE_E_OK;
-
-  /* Abnormal end */
- error_exit:
-  self->fStatus = DEVINFO_COLLECTOR_STATUS_ABEND;
-  if (object) moat_object_free(object);
-  return err;
-}
-
 static sse_int
 TDEVINFOCollector_ReturnDefaultValue(TDEVINFOCollector* self,
 				     DEVINFOCollector_OnGetCallback in_callback,
@@ -166,7 +114,6 @@ TDEVINFOCollector_ReturnDefaultValue(TDEVINFOCollector* self,
   }
 
   /* Call callback */
-  self->fStatus = DEVINFO_COLLECTOR_STATUS_PUBLISHING;
   if (self->fOnGetCallback) {
     LOG_DEBUG("Call callback = [%p]", self->fOnGetCallback);
     self->fOnGetCallback(object, self->fUserData, SSE_E_OK);
@@ -185,6 +132,14 @@ TDEVINFOCollector_ReturnDefaultValue(TDEVINFOCollector* self,
   return err;
 }
 
+sse_int
+TDEVINFOCollector_GetHardwarePlatformVendor(TDEVINFOCollector* self,
+					    DEVINFOCollector_OnGetCallback in_callback,
+					    sse_pointer in_user_data)
+{
+  LOG_WARN("This function should not be called. Concrete function for each gateways should be called.");
+  return TDEVINFOCollector_ReturnDefaultValue(self, in_callback, in_user_data, DEVINFO_KEY_VENDOR, "Unknown");
+}
 
 sse_int
 TDEVINFOCollector_GetHardwarePlatformProduct(TDEVINFOCollector* self,
@@ -237,7 +192,6 @@ TDEVINFOCollector_GetHardwarePlatformSerial(TDEVINFOCollector* self,
   }
 
   /* Call callback */
-  self->fStatus = DEVINFO_COLLECTOR_STATUS_PUBLISHING;
   if (self->fOnGetCallback) {
     LOG_DEBUG("Call callback = [%p]", self->fOnGetCallback);
     self->fOnGetCallback(object, self->fUserData, SSE_E_OK);
@@ -246,6 +200,7 @@ TDEVINFOCollector_GetHardwarePlatformSerial(TDEVINFOCollector* self,
   /* Cleanup */
   moat_object_free(object);
   self->fStatus = DEVINFO_COLLECTOR_STATUS_COMPLETED;
+  return SSE_E_OK;
 
   /* Abnormal end */
  error_exit:
@@ -306,7 +261,6 @@ TDEVINFOCollector_GetHardwarePlatformDeviceId(TDEVINFOCollector* self,
   }
 
   /* Call callback */
-  self->fStatus = DEVINFO_COLLECTOR_STATUS_PUBLISHING;
   if (self->fOnGetCallback) {
     LOG_DEBUG("Call callback = [%p]", self->fOnGetCallback);
     self->fOnGetCallback(object, self->fUserData, SSE_E_OK);
@@ -705,7 +659,6 @@ TDEVINFOCollector_GetHardwareSim(TDEVINFOCollector* self,
   }
 
   /* Call callback */
-  self->fStatus = DEVINFO_COLLECTOR_STATUS_PUBLISHING;
   if(self->fOnGetCallback) {
     self->fOnGetCallback(object, self->fUserData, err);
   }
@@ -783,7 +736,6 @@ TDEVINFOCollector_GetSoftwareOS(TDEVINFOCollector* self,
   }
 
   /* Call callback */
-  self->fStatus = DEVINFO_COLLECTOR_STATUS_PUBLISHING;
   if(self->fOnGetCallback) {
     self->fOnGetCallback(object, self->fUserData, err);
   }
@@ -855,7 +807,6 @@ TDEVINFOCollector_GetSoftwareSscl(TDEVINFOCollector* self,
   }
 
   /* Call callback */
-  self->fStatus = DEVINFO_COLLECTOR_STATUS_PUBLISHING;
   if(self->fOnGetCallback) {
     self->fOnGetCallback(object, self->fUserData, err);
   }

@@ -45,6 +45,7 @@ SSE_BEGIN_C_DECLS
 
 #include <devinfo/devinfo_repository.h>
 #include <devinfo/devinfo_collector.h>
+#include <devinfo/devinfo_manager.h>
 
 SSE_END_C_DECLS
 

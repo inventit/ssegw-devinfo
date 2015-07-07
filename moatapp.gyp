@@ -15,6 +15,7 @@
         '<@(sseutils_src)',
         'src/devinfo/devinfo_repository.c',
         'src/devinfo/devinfo_collector.c',
+        'src/devinfo/devinfo_manager.c',
         'src/<(package_name).c',
        ],
       'product_prefix': '',

@@ -78,7 +78,7 @@ static sse_int
 test_devinfo_repository__add_vendor(Moat in_moat)
 {
   TDEVINFORepository repo;
-  SSEString* vendor;
+  MoatValue* vendor;
   SSEString* json = NULL;
   sse_char* json_cstr;
   sse_char expected[] = "{\"hardware\":{\"platform\":{\"vendor\":\"ABC Corp.\"}}}";
@@ -87,7 +87,7 @@ test_devinfo_repository__add_vendor(Moat in_moat)
   ASSERT(TDEVINFORepository_Initialize(&repo, in_moat) == SSE_E_OK);
 
   // Add hardware.platform.vendor into empty repository.
-  ASSERT((vendor = sse_string_new("ABC Corp.")) != NULL);
+  ASSERT((vendor = moat_value_new_string("ABC Corp.", 0, sse_true)) != NULL);
   ASSERT(TDEVINFORepository_SetHardwarePlatformVendor(&repo, vendor) == SSE_E_OK);
   ASSERT(TDEVINFORepository_GetDevinfoWithJson(&repo, NULL, &json) == SSE_E_OK);
   ASSERT((json_cstr = sse_strndup(sse_string_get_cstr(json), sse_string_get_length(json))) != NULL);
@@ -96,7 +96,7 @@ test_devinfo_repository__add_vendor(Moat in_moat)
 
   // Cleanup
   TDEVINFORepository_Finalize(&repo);
-  sse_string_free(vendor, sse_true);
+  moat_value_free(vendor);
   sse_string_free(json, sse_true);
   sse_free(json_cstr);
 
@@ -108,7 +108,7 @@ test_devinfo_repository__overwrite_vendor(Moat in_moat)
 {
   TDEVINFORepository repo;
   SSEString* path;
-  SSEString* vendor;
+  MoatValue* vendor;
   SSEString* json = NULL;
   sse_char* json_cstr;
   sse_char expected[] = "ABC Corp.";
@@ -119,7 +119,7 @@ test_devinfo_repository__overwrite_vendor(Moat in_moat)
   ASSERT((path = sse_string_new("./devinfo.json")) != NULL);
   ASSERT(TDEVINFORepository_LoadDevinfo(&repo, path) == SSE_E_OK);
 
-  ASSERT((vendor = sse_string_new("ABC Corp.")) != NULL);
+  ASSERT((vendor = moat_value_new_string("ABC Corp.", 0, sse_true)) != NULL);
   ASSERT(TDEVINFORepository_SetHardwarePlatformVendor(&repo, vendor) == SSE_E_OK);
 
   ASSERT(TDEVINFORepository_GetDevinfoWithJson(&repo, NULL, &json) == SSE_E_OK);
@@ -130,7 +130,7 @@ test_devinfo_repository__overwrite_vendor(Moat in_moat)
   // Cleanup
   TDEVINFORepository_Finalize(&repo);
   sse_string_free(path, sse_true);
-  sse_string_free(vendor, sse_true);
+  moat_value_free(vendor);
   sse_string_free(json, sse_true);
   sse_free(json_cstr);
 
@@ -145,33 +145,33 @@ test_devinfo_repository__add_interfaces(Moat in_moat)
   SSEString* json = NULL;
   sse_char* json_cstr;
 
-  SSEString* eth0_name;
-  SSEString* eth0_macaddr;
-  SSEString* eth0_ipv4addr;
-  SSEString* eth0_netmask;
-  SSEString* eth0_ipv6addr;
+  MoatValue* eth0_name;
+  MoatValue* eth0_macaddr;
+  MoatValue* eth0_ipv4addr;
+  MoatValue* eth0_netmask;
+  MoatValue* eth0_ipv6addr;
 
-  SSEString* usb0_name;
-  SSEString* usb0_macaddr;
-  SSEString* usb0_ipv4addr;
-  SSEString* usb0_netmask;
-  SSEString* usb0_ipv6addr;
+  MoatValue* usb0_name;
+  MoatValue* usb0_macaddr;
+  MoatValue* usb0_ipv4addr;
+  MoatValue* usb0_netmask;
+  MoatValue* usb0_ipv6addr;
 
   // Initialize
   ASSERT(TDEVINFORepository_Initialize(&repo, in_moat) == SSE_E_OK);
 
   // Register intaface info
-  ASSERT((eth0_name     = sse_string_new("eth0")));
-  ASSERT((eth0_macaddr  = sse_string_new("00:11:22:aa:bb:cc")));
-  ASSERT((eth0_ipv4addr = sse_string_new("192.128.1.32")));
-  ASSERT((eth0_netmask  = sse_string_new("255.255.255.0")));
-  ASSERT((eth0_ipv6addr = sse_string_new("fe80::a00:27ff:fea9:d684/64")));
+  ASSERT((eth0_name     = moat_value_new_string("eth0", 0, sse_true)));
+  ASSERT((eth0_macaddr  = moat_value_new_string("00:11:22:aa:bb:cc", 0, sse_true)));
+  ASSERT((eth0_ipv4addr = moat_value_new_string("192.128.1.32", 0, sse_true)));
+  ASSERT((eth0_netmask  = moat_value_new_string("255.255.255.0", 0, sse_true)));
+  ASSERT((eth0_ipv6addr = moat_value_new_string("fe80::a00:27ff:fea9:d684/64", 0, sse_true)));
 
-  ASSERT((usb0_name     = sse_string_new("usb0")));
-  ASSERT((usb0_macaddr  = sse_string_new("44:55:66:dd:ee:ff")));
-  ASSERT((usb0_ipv4addr = sse_string_new("10.0.2.15")));
-  ASSERT((usb0_netmask  = sse_string_new("255.255.254.0")));
-  ASSERT((usb0_ipv6addr = sse_string_new("fe80::a00:27ff:fea9:d684/64")));
+  ASSERT((usb0_name     = moat_value_new_string("usb0", 0, sse_true)));
+  ASSERT((usb0_macaddr  = moat_value_new_string("44:55:66:dd:ee:ff", 0, sse_true)));
+  ASSERT((usb0_ipv4addr = moat_value_new_string("10.0.2.15", 0, sse_true)));
+  ASSERT((usb0_netmask  = moat_value_new_string("255.255.254.0", 0, sse_true)));
+  ASSERT((usb0_ipv6addr = moat_value_new_string("fe80::a00:27ff:fea9:d684/64", 0, sse_true)));
 
   ASSERT(TDEVINFORepository_AddHadwareNetworkInterface(&repo, eth0_name, eth0_macaddr, eth0_ipv4addr, eth0_netmask, eth0_ipv6addr) == SSE_E_OK);
   ASSERT(TDEVINFORepository_AddHadwareNetworkInterface(&repo, usb0_name, usb0_macaddr, usb0_ipv4addr, usb0_netmask, usb0_ipv6addr) == SSE_E_OK);
@@ -189,17 +189,17 @@ test_devinfo_repository__add_interfaces(Moat in_moat)
   sse_string_free(json, sse_true);
   sse_free(json_cstr);
 
-  sse_string_free(eth0_name, sse_true);
-  sse_string_free(eth0_macaddr, sse_true);
-  sse_string_free(eth0_ipv4addr, sse_true);
-  sse_string_free(eth0_netmask, sse_true);
-  sse_string_free(eth0_ipv6addr, sse_true);
+  moat_value_free(eth0_name);
+  moat_value_free(eth0_macaddr);
+  moat_value_free(eth0_ipv4addr);
+  moat_value_free(eth0_netmask);
+  moat_value_free(eth0_ipv6addr);
 
-  sse_string_free(usb0_name, sse_true);
-  sse_string_free(usb0_macaddr, sse_true);
-  sse_string_free(usb0_ipv4addr, sse_true);
-  sse_string_free(usb0_netmask, sse_true);
-  sse_string_free(usb0_ipv6addr, sse_true);
+  moat_value_free(usb0_name);
+  moat_value_free(usb0_macaddr);
+  moat_value_free(usb0_ipv4addr);
+  moat_value_free(usb0_netmask);
+  moat_value_free(usb0_ipv6addr);
 
   return TEST_RESULT_SUCCESS;
 }
@@ -208,7 +208,7 @@ static sse_int
 test_devinfo_repository__add_all_items(Moat in_moat)
 {
   TDEVINFORepository repo;
-  SSEString* item;
+  MoatValue* item;
   SSEString* json = NULL;
   sse_char* json_cstr;
 
@@ -219,159 +219,159 @@ test_devinfo_repository__add_all_items(Moat in_moat)
   { // Hardware
     { // Platform
       // Vendor
-      ASSERT((item = sse_string_new("Raspberry Pi Fundation")) != NULL);
+      ASSERT((item = moat_value_new_string("Raspberry Pi Fundation", 0, sse_true)) != NULL);
       ASSERT(TDEVINFORepository_SetHardwarePlatformVendor(&repo, item) == SSE_E_OK);
-      sse_string_free(item, sse_true);
+      moat_value_free(item);
 
       // Product
-      ASSERT((item = sse_string_new("Raspberry Pi")) != NULL);
+      ASSERT((item = moat_value_new_string("Raspberry Pi", 0, sse_true)) != NULL);
       ASSERT(TDEVINFORepository_SetHardwarePlatformProduct(&repo, item) == SSE_E_OK);
-      sse_string_free(item, sse_true);
+      moat_value_free(item);
 
       // Model
-      ASSERT((item = sse_string_new("RASPBERRY PI 1 MODEL B+")) != NULL);
+      ASSERT((item = moat_value_new_string("RASPBERRY PI 1 MODEL B+", 0, sse_true)) != NULL);
       ASSERT(TDEVINFORepository_SetHardwarePlatformModel(&repo, item) == SSE_E_OK);
-      sse_string_free(item, sse_true);
+      moat_value_free(item);
 
       // Serial No.
-      ASSERT((item = sse_string_new("ABC12345")) != NULL);
+      ASSERT((item = moat_value_new_string("ABC12345", 0, sse_true)) != NULL);
       ASSERT(TDEVINFORepository_SetHardwarePlatformSerial(&repo, item) == SSE_E_OK);
-      sse_string_free(item, sse_true);
+      moat_value_free(item);
 
       // Hardware version
-      ASSERT((item = sse_string_new("1.2.3")) != NULL);
+      ASSERT((item = moat_value_new_string("1.2.3", 0, sse_true)) != NULL);
       ASSERT(TDEVINFORepository_SetHardwarePlatformHwVersion(&repo, item) == SSE_E_OK);
-      sse_string_free(item, sse_true);
+      moat_value_free(item);
 
       // Firmware versionn
-      ASSERT((item = sse_string_new("2.4.5")) != NULL);
+      ASSERT((item = moat_value_new_string("2.4.5", 0, sse_true)) != NULL);
       ASSERT(TDEVINFORepository_SetHardwarePlatformFwVersion(&repo, item) == SSE_E_OK);
-      sse_string_free(item, sse_true);
+      moat_value_free(item);
 
       // Device Id
-      ASSERT((item = sse_string_new("RSP:SN:123456")) != NULL);
+      ASSERT((item = moat_value_new_string("RSP:SN:123456", 0, sse_true)) != NULL);
       ASSERT(TDEVINFORepository_SetHardwarePlatformDeviceId(&repo, item) == SSE_E_OK);
-      sse_string_free(item, sse_true);
+      moat_value_free(item);
 
       // Category
-      ASSERT((item = sse_string_new("gateway")) != NULL);
+      ASSERT((item = moat_value_new_string("gateway", 0, sse_true)) != NULL);
       ASSERT(TDEVINFORepository_SetHardwarePlatformCategory(&repo, item) == SSE_E_OK);
-      sse_string_free(item, sse_true);
+      moat_value_free(item);
     }
     { // Modem
       // Type
-      ASSERT((item = sse_string_new("MC8090")) != NULL);
+      ASSERT((item = moat_value_new_string("MC8090", 0, sse_true)) != NULL);
       ASSERT(TDEVINFORepository_SetHardwareModemType(&repo, item) == SSE_E_OK);
-      sse_string_free(item, sse_true);
+      moat_value_free(item);
 
       // Hardware version
-      ASSERT((item = sse_string_new("1.2.3")) != NULL);
+      ASSERT((item = moat_value_new_string("1.2.3", 0, sse_true)) != NULL);
       ASSERT(TDEVINFORepository_SetHardwareModemHwVersion(&repo, item) == SSE_E_OK);
-      sse_string_free(item, sse_true);
+      moat_value_free(item);
 
       // Frimware version
-      ASSERT((item = sse_string_new("4.5.6")) != NULL);
+      ASSERT((item = moat_value_new_string("4.5.6", 0, sse_true)) != NULL);
       ASSERT(TDEVINFORepository_SetHardwareModemFwVersion(&repo, item) == SSE_E_OK);
-      sse_string_free(item, sse_true);
+      moat_value_free(item);
     }
     { // Network
       { // Interface
 
-	SSEString* if_name;
-	SSEString* if_macaddr;
-	SSEString* if_ipv4addr;
-	SSEString* if_netmask;
-	SSEString* if_ipv6addr;
+	MoatValue* if_name;
+	MoatValue* if_macaddr;
+	MoatValue* if_ipv4addr;
+	MoatValue* if_netmask;
+	MoatValue* if_ipv6addr;
 
 	// eth0
-	ASSERT((if_name     = sse_string_new("eth0")));
-	ASSERT((if_macaddr  = sse_string_new("00:11:22:aa:bb:cc")));
-	ASSERT((if_ipv4addr = sse_string_new("192.128.1.32")));
-	ASSERT((if_netmask  = sse_string_new("255.255.255.0")));
-	ASSERT((if_ipv6addr = sse_string_new("fe80::a00:27ff:fea9:d684/64")));
+	ASSERT((if_name     = moat_value_new_string("eth0", 0, sse_true)));
+	ASSERT((if_macaddr  = moat_value_new_string("00:11:22:aa:bb:cc", 0, sse_true)));
+	ASSERT((if_ipv4addr = moat_value_new_string("192.128.1.32", 0, sse_true)));
+	ASSERT((if_netmask  = moat_value_new_string("255.255.255.0", 0, sse_true)));
+	ASSERT((if_ipv6addr = moat_value_new_string("fe80::a00:27ff:fea9:d684/64", 0, sse_true)));
 	ASSERT(TDEVINFORepository_AddHadwareNetworkInterface(&repo, if_name, if_macaddr, if_ipv4addr, if_netmask, if_ipv6addr) == SSE_E_OK);
-	sse_string_free(if_name, sse_true);
-	sse_string_free(if_macaddr, sse_true);
-	sse_string_free(if_ipv4addr, sse_true);
-	sse_string_free(if_netmask, sse_true);
-	sse_string_free(if_ipv6addr, sse_true);
+	moat_value_free(if_name);
+	moat_value_free(if_macaddr);
+	moat_value_free(if_ipv4addr);
+	moat_value_free(if_netmask);
+	moat_value_free(if_ipv6addr);
 
 	// wlan0
-	ASSERT((if_name     = sse_string_new("wlan0")));
-	ASSERT((if_macaddr  = sse_string_new("88:1f:a1:10:fd:c8")));
-	ASSERT((if_ipv4addr = sse_string_new("192.168.1.11")));
-	ASSERT((if_netmask  = sse_string_new("255.255.255.0")));
+	ASSERT((if_name     = moat_value_new_string("wlan0", 0, sse_true)));
+	ASSERT((if_macaddr  = moat_value_new_string("88:1f:a1:10:fd:c8", 0, sse_true)));
+	ASSERT((if_ipv4addr = moat_value_new_string("192.168.1.11", 0, sse_true)));
+	ASSERT((if_netmask  = moat_value_new_string("255.255.255.0", 0, sse_true)));
 	// Some interface might not have IPv6 address.
 	ASSERT(TDEVINFORepository_AddHadwareNetworkInterface(&repo, if_name, if_macaddr, if_ipv4addr, if_netmask, NULL) == SSE_E_OK);
-	sse_string_free(if_name, sse_true);
-	sse_string_free(if_macaddr, sse_true);
-	sse_string_free(if_ipv4addr, sse_true);
-	sse_string_free(if_netmask, sse_true);
+	moat_value_free(if_name);
+	moat_value_free(if_macaddr);
+	moat_value_free(if_ipv4addr);
+	moat_value_free(if_netmask);
 
 	// usb0
-	ASSERT((if_name     = sse_string_new("usb0")));
-	ASSERT((if_macaddr  = sse_string_new("00:11:22:aa:bb:cc")));
-	ASSERT((if_ipv6addr = sse_string_new("fe80::a00:27ff:fea9:d684/64")));
+	ASSERT((if_name     = moat_value_new_string("usb0", 0, sse_true)));
+	ASSERT((if_macaddr  = moat_value_new_string("00:11:22:aa:bb:cc", 0, sse_true)));
+	ASSERT((if_ipv6addr = moat_value_new_string("fe80::a00:27ff:fea9:d684/64", 0, sse_true)));
 	// Some interface might not have IPv4 address.
 	ASSERT(TDEVINFORepository_AddHadwareNetworkInterface(&repo, if_name, if_macaddr, NULL, NULL, if_ipv6addr) == SSE_E_OK);
-	sse_string_free(if_name, sse_true);
-	sse_string_free(if_macaddr, sse_true);
-	sse_string_free(if_ipv6addr, sse_true);
+	moat_value_free(if_name);
+	moat_value_free(if_macaddr);
+	moat_value_free(if_ipv6addr);
       }
       { // Nameserver
 	// Server 1
-	ASSERT((item = sse_string_new("222.146.35.1")) != NULL);
+	ASSERT((item = moat_value_new_string("222.146.35.1", 0, sse_true)) != NULL);
 	ASSERT(TDEVINFORepository_AddHardwareNetworkNameserver(&repo, item) == SSE_E_OK);
-	sse_string_free(item, sse_true);
+	moat_value_free(item);
 
 	// Server 2
-	ASSERT((item = sse_string_new("221.184.25.1")) != NULL);
+	ASSERT((item = moat_value_new_string("221.184.25.1", 0, sse_true)) != NULL);
 	ASSERT(TDEVINFORepository_AddHardwareNetworkNameserver(&repo, item) == SSE_E_OK);
-	sse_string_free(item, sse_true);
+	moat_value_free(item);
       }
     }
     { // SIM
-      SSEString* iccid;
-      SSEString* imsi;
-      SSEString* msisdn;
+      MoatValue* iccid;
+      MoatValue* imsi;
+      MoatValue* msisdn;
 
       // SIM 1
-      ASSERT((iccid = sse_string_new("898110011111111111111")));
-      ASSERT((imsi = sse_string_new("121234561234560")));
-      ASSERT((msisdn = sse_string_new("09012345678")));
+      ASSERT((iccid = moat_value_new_string("898110011111111111111", 0, sse_true)));
+      ASSERT((imsi = moat_value_new_string("121234561234560", 0, sse_true)));
+      ASSERT((msisdn = moat_value_new_string("09012345678", 0, sse_true)));
       ASSERT(TDEVINFORepository_AddHardwareSim(&repo, iccid, imsi, msisdn) == SSE_E_OK);
-      sse_string_free(iccid, sse_true);
-      sse_string_free(imsi, sse_true);
-      sse_string_free(msisdn, sse_true);
+      moat_value_free(iccid);
+      moat_value_free(imsi);
+      moat_value_free(msisdn);
 
       // SIM 2
-      ASSERT((msisdn = sse_string_new("08056781234")));
+      ASSERT((msisdn = moat_value_new_string("08056781234", 0, sse_true)));
       ASSERT(TDEVINFORepository_AddHardwareSim(&repo, NULL, NULL, msisdn) == SSE_E_OK);
-      sse_string_free(msisdn, sse_true);
+      moat_value_free(msisdn);
     }
     { // Software
       { // OS
-	SSEString* type;
-	SSEString* version;
+	MoatValue* type;
+	MoatValue* version;
 
-	ASSERT((type = sse_string_new("Linux")) != NULL);
-	ASSERT((version = sse_string_new("2.6.26")) != NULL);
+	ASSERT((type = moat_value_new_string("Linux", 0, sse_true)) != NULL);
+	ASSERT((version = moat_value_new_string("2.6.26", 0, sse_true)) != NULL);
 	ASSERT(TDEVINFORepository_SetSoftwareOS(&repo, type, version) == SSE_E_OK);
-	sse_string_free(type, sse_true);
-	sse_string_free(version, sse_true);
+	moat_value_free(type);
+	moat_value_free(version);
       }
       { // ServiceSync Client
-	SSEString* type;
-	SSEString* version;
-	SSEString* sdk_version;
+	MoatValue* type;
+	MoatValue* version;
+	MoatValue* sdk_version;
 
-	ASSERT((type = sse_string_new("SSEGW")) != NULL);
-	ASSERT((version = sse_string_new("1.0.7")) != NULL);
-	ASSERT((sdk_version = sse_string_new("1.0.5")) != NULL);
+	ASSERT((type = moat_value_new_string("SSEGW", 0, sse_true)) != NULL);
+	ASSERT((version = moat_value_new_string("1.0.7", 0, sse_true)) != NULL);
+	ASSERT((sdk_version = moat_value_new_string("1.0.5", 0, sse_true)) != NULL);
 	ASSERT(TDEVINFORepository_SetSoftwareSscl(&repo, type, version, sdk_version) == SSE_E_OK);
-	sse_string_free(type, sse_true);
-	sse_string_free(version, sse_true);
-	sse_string_free(sdk_version, sse_true);
+	moat_value_free(type);
+	moat_value_free(version);
+	moat_value_free(sdk_version);
       }
     }
   }
@@ -485,6 +485,16 @@ test_devinfo_collector_get_hardware_sim(Moat in_moat)
   return TEST_RESULT_UNKNOWN;
 }
 
+TDEVINFOManager g_manager;
+
+static sse_int
+test_devinfo_manager(Moat in_moat)
+{
+  TDEVINFOManager_Initialize(&g_manager, in_moat);
+  TDEVINFOManager_Collect(&g_manager);
+  return TEST_RESULT_UNKNOWN;
+}
+
 static void
 test_report(void)
 {
@@ -511,6 +521,7 @@ moat_app_main(sse_int in_argc, sse_char *argv[])
 	DO_TEST(test_devinfo_collector_get_hardware_network_interface(moat));
 	DO_TEST(test_devinfo_collector_get_hardware_network_nameserver(moat));
 	DO_TEST(test_devinfo_collector_get_hardware_sim(moat));
+	DO_TEST(test_devinfo_manager(moat));
 
 	err = moat_run(moat);
 	if (err != SSE_E_OK) {

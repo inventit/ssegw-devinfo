@@ -382,7 +382,7 @@ TDEVINFOManager_Progress(TDEVINFOManager *self)
       LOG_INFO("devinfo=[%s]", devinfo);
       sse_free(devinfo);
     }
-    sse_free(json_string);
+    sse_string_free(json_string, sse_true);
     return SSE_E_OK;
 
   default:

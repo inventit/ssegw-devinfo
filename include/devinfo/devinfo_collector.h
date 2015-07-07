@@ -35,7 +35,7 @@ enum DEVINFOCollectorStatus_ {
 };
 typedef enum DEVINFOCollectorStatus_ DEVINFOCollectorStatus;
 
-typedef void(*DEVINFOCollector_OnGetCallback)(MoatObject* in_collected,
+typedef void(*DEVINFOCollector_OnGetCallback)(MoatValue* in_value,
 					      sse_pointer in_user_data,
 					      sse_int in_err_code);
 
@@ -114,14 +114,14 @@ TDEVINFOCollector_GetHardwareModemFwVersion(TDEVINFOCollector* self,
 					    sse_pointer in_user_data);
 
 sse_int
-TDEVINFOCollector_GetHadwareNetworkInterface(TDEVINFOCollector* self,
-					     DEVINFOCollector_OnGetCallback in_callback,
-					     sse_pointer in_user_data);
-
-sse_int
-TDEVINFOCollector_GetHadwareNetworkNameserver(TDEVINFOCollector* self,
+TDEVINFOCollector_GetHardwareNetworkInterface(TDEVINFOCollector* self,
 					      DEVINFOCollector_OnGetCallback in_callback,
 					      sse_pointer in_user_data);
+
+sse_int
+TDEVINFOCollector_GetHardwareNetworkNameserver(TDEVINFOCollector* self,
+					       DEVINFOCollector_OnGetCallback in_callback,
+					       sse_pointer in_user_data);
 
 sse_int
 TDEVINFOCollector_GetHardwareSim(TDEVINFOCollector* self,

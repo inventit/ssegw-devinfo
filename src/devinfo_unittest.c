@@ -173,8 +173,8 @@ test_devinfo_repository__add_interfaces(Moat in_moat)
   ASSERT((usb0_netmask  = moat_value_new_string("255.255.254.0", 0, sse_true)));
   ASSERT((usb0_ipv6addr = moat_value_new_string("fe80::a00:27ff:fea9:d684/64", 0, sse_true)));
 
-  ASSERT(TDEVINFORepository_AddHadwareNetworkInterface(&repo, eth0_name, eth0_macaddr, eth0_ipv4addr, eth0_netmask, eth0_ipv6addr) == SSE_E_OK);
-  ASSERT(TDEVINFORepository_AddHadwareNetworkInterface(&repo, usb0_name, usb0_macaddr, usb0_ipv4addr, usb0_netmask, usb0_ipv6addr) == SSE_E_OK);
+  ASSERT(TDEVINFORepository_AddHardwareNetworkInterface(&repo, eth0_name, eth0_macaddr, eth0_ipv4addr, eth0_netmask, eth0_ipv6addr) == SSE_E_OK);
+  ASSERT(TDEVINFORepository_AddHardwareNetworkInterface(&repo, usb0_name, usb0_macaddr, usb0_ipv4addr, usb0_netmask, usb0_ipv6addr) == SSE_E_OK);
 
   // Print devinfo with JSON
   ASSERT(TDEVINFORepository_GetDevinfoWithJson(&repo, NULL, &json) == SSE_E_OK);
@@ -289,7 +289,7 @@ test_devinfo_repository__add_all_items(Moat in_moat)
 	ASSERT((if_ipv4addr = moat_value_new_string("192.128.1.32", 0, sse_true)));
 	ASSERT((if_netmask  = moat_value_new_string("255.255.255.0", 0, sse_true)));
 	ASSERT((if_ipv6addr = moat_value_new_string("fe80::a00:27ff:fea9:d684/64", 0, sse_true)));
-	ASSERT(TDEVINFORepository_AddHadwareNetworkInterface(&repo, if_name, if_macaddr, if_ipv4addr, if_netmask, if_ipv6addr) == SSE_E_OK);
+	ASSERT(TDEVINFORepository_AddHardwareNetworkInterface(&repo, if_name, if_macaddr, if_ipv4addr, if_netmask, if_ipv6addr) == SSE_E_OK);
 	moat_value_free(if_name);
 	moat_value_free(if_macaddr);
 	moat_value_free(if_ipv4addr);
@@ -302,7 +302,7 @@ test_devinfo_repository__add_all_items(Moat in_moat)
 	ASSERT((if_ipv4addr = moat_value_new_string("192.168.1.11", 0, sse_true)));
 	ASSERT((if_netmask  = moat_value_new_string("255.255.255.0", 0, sse_true)));
 	// Some interface might not have IPv6 address.
-	ASSERT(TDEVINFORepository_AddHadwareNetworkInterface(&repo, if_name, if_macaddr, if_ipv4addr, if_netmask, NULL) == SSE_E_OK);
+	ASSERT(TDEVINFORepository_AddHardwareNetworkInterface(&repo, if_name, if_macaddr, if_ipv4addr, if_netmask, NULL) == SSE_E_OK);
 	moat_value_free(if_name);
 	moat_value_free(if_macaddr);
 	moat_value_free(if_ipv4addr);
@@ -313,7 +313,7 @@ test_devinfo_repository__add_all_items(Moat in_moat)
 	ASSERT((if_macaddr  = moat_value_new_string("00:11:22:aa:bb:cc", 0, sse_true)));
 	ASSERT((if_ipv6addr = moat_value_new_string("fe80::a00:27ff:fea9:d684/64", 0, sse_true)));
 	// Some interface might not have IPv4 address.
-	ASSERT(TDEVINFORepository_AddHadwareNetworkInterface(&repo, if_name, if_macaddr, NULL, NULL, if_ipv6addr) == SSE_E_OK);
+	ASSERT(TDEVINFORepository_AddHardwareNetworkInterface(&repo, if_name, if_macaddr, NULL, NULL, if_ipv6addr) == SSE_E_OK);
 	moat_value_free(if_name);
 	moat_value_free(if_macaddr);
 	moat_value_free(if_ipv6addr);
@@ -389,104 +389,7 @@ test_devinfo_repository__add_all_items(Moat in_moat)
   return TEST_RESULT_UNKNOWN;
 }
 
-void
-test_devinfo_collector_get_hardware_vendor_callback(MoatObject* in_collected, sse_pointer in_user_data, sse_int in_error_code)
-{
-  MoatObject *object = (MoatObject *)in_collected;
-  sse_char *vendor;
-  sse_uint vendor_len;
-  sse_char* expected = "Unknown";
-
-  ASSERT(in_collected);
-  ASSERT(in_error_code == SSE_E_OK);
-
-  ASSERT(moat_object_get_string_value(object, DEVINFO_KEY_VENDOR, &vendor, &vendor_len) == SSE_E_OK);
-  ASSERT(sse_strlen(expected) == vendor_len);
-  ASSERT(sse_memcmp(expected, vendor, vendor_len) == 0);
-
-  LOG_PRINT("%s ... Success\n", __FUNCTION__);
-}
-
-static sse_int
-test_devinfo_collector_get_hardware_vendor(Moat in_moat)
-{
-  TDEVINFOCollector collector;
-  ASSERT(TDEVINFOCollector_Initialize(&collector, in_moat) == SSE_E_OK);
-  ASSERT(TDEVINFOCollector_GetHardwarePlatformVendor(&collector, test_devinfo_collector_get_hardware_vendor_callback, NULL) == SSE_E_OK);
-
-  return TEST_RESULT_UNKNOWN;
-}
-
-void
-test_devinfo_collector_get_hardware_network_interface_callback(MoatObject* in_collected, sse_pointer in_user_data, sse_int in_error_code)
-{
-  MoatObject *object = (MoatObject *)in_collected;
-
-  ASSERT(in_collected);
-  ASSERT(in_error_code == SSE_E_OK);
-
-  SseUtilMoatObjectDump(object);
-}
-
-static sse_int
-test_devinfo_collector_get_hardware_network_interface(Moat in_moat)
-{
-  TDEVINFOCollector collector;
-  ASSERT(TDEVINFOCollector_Initialize(&collector, in_moat) == SSE_E_OK);
-  ASSERT(TDEVINFOCollector_GetHadwareNetworkInterface(&collector, test_devinfo_collector_get_hardware_network_interface_callback, NULL) == SSE_E_OK);
-
-  return TEST_RESULT_UNKNOWN;
-}
-
-void
-test_devinfo_collector_get_hardware_network_nameserver_callback(MoatObject* in_collected, sse_pointer in_user_data, sse_int in_error_code)
-{
-  MoatObject *object = (MoatObject *)in_collected;
-  sse_char *nameserver;
-  sse_uint nameserver_len;
-  sse_char buff[128];
-
-  ASSERT(in_collected);
-  ASSERT(in_error_code == SSE_E_OK);
-  ASSERT(moat_object_get_string_value(object, DEVINFO_KEY_NET_NAMESERVER, &nameserver, &nameserver_len) == SSE_E_OK);
-  sse_strncpy(buff, nameserver, nameserver_len);
-  buff[nameserver_len] = '\0';
-  LOG_PRINT("nameserver=[%s]", buff);
-}
-
-static sse_int
-test_devinfo_collector_get_hardware_network_nameserver(Moat in_moat)
-{
-  TDEVINFOCollector collector;
-  ASSERT(TDEVINFOCollector_Initialize(&collector, in_moat) == SSE_E_OK);
-  ASSERT(TDEVINFOCollector_GetHadwareNetworkNameserver(&collector, test_devinfo_collector_get_hardware_network_nameserver_callback, NULL) == SSE_E_OK);
-
-  return TEST_RESULT_UNKNOWN;
-}
-
-static void
-test_devinfo_collector_get_hardware_sim_callback(MoatObject* in_collected, sse_pointer in_user_data, sse_int in_error_code)
-{
-  MoatObject *object = (MoatObject *)in_collected;
-
-  ASSERT(in_collected);
-  ASSERT(in_error_code == SSE_E_OK);
-
-  SseUtilMoatObjectDump(object);
-}
-
-static sse_int
-test_devinfo_collector_get_hardware_sim(Moat in_moat)
-{
-  TDEVINFOCollector collector;
-  ASSERT(TDEVINFOCollector_Initialize(&collector, in_moat) == SSE_E_OK);
-  ASSERT(TDEVINFOCollector_GetHardwareSim(&collector, test_devinfo_collector_get_hardware_sim_callback, NULL) == SSE_E_OK);
-
-  return TEST_RESULT_UNKNOWN;
-}
-
-TDEVINFOManager g_manager;
-
+TDEVINFOManager g_manager; //TODO FIX ME
 static sse_int
 test_devinfo_manager(Moat in_moat)
 {
@@ -517,10 +420,6 @@ moat_app_main(sse_int in_argc, sse_char *argv[])
 	DO_TEST(test_devinfo_repository__overwrite_vendor(moat));
 	DO_TEST(test_devinfo_repository__add_interfaces(moat));
 	DO_TEST(test_devinfo_repository__add_all_items(moat));
-	DO_TEST(test_devinfo_collector_get_hardware_vendor(moat));
-	DO_TEST(test_devinfo_collector_get_hardware_network_interface(moat));
-	DO_TEST(test_devinfo_collector_get_hardware_network_nameserver(moat));
-	DO_TEST(test_devinfo_collector_get_hardware_sim(moat));
 	DO_TEST(test_devinfo_manager(moat));
 
 	err = moat_run(moat);

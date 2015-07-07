@@ -233,12 +233,12 @@ TDEVINFORepository_SetHardwareModemFwVersion(TDEVINFORepository* self,
  * @retval others   Failuer
  */
 sse_int
-TDEVINFORepository_AddHadwareNetworkInterface(TDEVINFORepository* self,
-					      MoatValue* in_name,
-					      MoatValue* in_hw_address,
-					      MoatValue* in_ipv4_address,
-					      MoatValue* in_netmask,
-					      MoatValue* in_ipv6_address);
+TDEVINFORepository_AddHardwareNetworkInterface(TDEVINFORepository* self,
+					       MoatValue* in_name,
+					       MoatValue* in_hw_address,
+					       MoatValue* in_ipv4_address,
+					       MoatValue* in_netmask,
+					       MoatValue* in_ipv6_address);
 
 /**
  * @brief Remove a network interface

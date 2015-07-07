@@ -141,6 +141,7 @@ DEVINFORepository_GetDevinfo(MoatObject* in_object,
   MoatValue* value;
   MoatObject* tmp_object;
 
+  ASSERT(in_object);
   ASSERT(in_key);
   ASSERT(out_value);
 
@@ -191,7 +192,6 @@ TDEVINFORepository_GetDevinfo(TDEVINFORepository* self,
 
   key = sse_string_split(in_key, ".", 0);
   ASSERT(key);
-
 
   err = DEVINFORepository_GetDevinfo(self->fDevinfo, key, out_value);
   if (err != SSE_E_OK) {
@@ -514,12 +514,12 @@ TDEVINFORepository_SetHardwareModemFwVersion(TDEVINFORepository* self,
 }
 
 sse_int
-TDEVINFORepository_AddHadwareNetworkInterface(TDEVINFORepository* self,
-					      MoatValue* in_name,
-					      MoatValue* in_hw_address,
-					      MoatValue* in_ipv4_address,
-					      MoatValue* in_netmask,
-					      MoatValue* in_ipv6_address)
+TDEVINFORepository_AddHardwareNetworkInterface(TDEVINFORepository* self,
+					       MoatValue* in_name,
+					       MoatValue* in_hw_address,
+					       MoatValue* in_ipv4_address,
+					       MoatValue* in_netmask,
+					       MoatValue* in_ipv6_address)
 {
   sse_int err;
   SSEString* key;
@@ -801,7 +801,6 @@ TDEVINFORepository_SetSoftwareSscl(TDEVINFORepository* self,
 {
   sse_int err;
   SSEString* key;
-  MoatValue* value;
 
   ASSERT(self);
   ASSERT(in_type);

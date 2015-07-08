@@ -91,22 +91,18 @@ TDEVINFOCollector_ReturnDefaultValue(TDEVINFOCollector* self,
 {
   MoatValue *value;
 
-  LOG_DEBUG("Set callback = [%p] and user data= [%p]", in_callback, in_user_data);
-
   ASSERT(self);
   ASSERT(in_value);
 
+  /* Create a MoatValue */
   self->fOnGetCallback = in_callback;
   self->fUserData = in_user_data;
-
-  /* Create a MoatValue */
   self->fStatus = DEVINFO_COLLECTOR_STATUS_COLLECTING;
   value = moat_value_new_string((sse_char*)in_value, 0, sse_true);
   ASSERT(value);
 
   /* Call callback */
   if (self->fOnGetCallback) {
-    LOG_DEBUG("Call callback = [%p]", self->fOnGetCallback);
     self->fOnGetCallback(value, self->fUserData, SSE_E_OK);
   }
 
@@ -119,13 +115,30 @@ TDEVINFOCollector_ReturnDefaultValue(TDEVINFOCollector* self,
   /* Abnormal end */
 }
 
+static sse_int
+TDEVINFOCollector_ReturnNoEntry(TDEVINFOCollector* self,
+				DEVINFOCollector_OnGetCallback in_callback,
+				sse_pointer in_user_data)
+{
+  ASSERT(self);
+
+  self->fOnGetCallback = in_callback;
+  self->fUserData = in_user_data;
+  self->fStatus = DEVINFO_COLLECTOR_STATUS_COLLECTING;
+  if (self->fOnGetCallback) {
+    self->fOnGetCallback(NULL, self->fUserData, SSE_E_NOENT);
+  }
+  self->fStatus = DEVINFO_COLLECTOR_STATUS_COMPLETED;
+  return SSE_E_OK;
+}
+
 sse_int
 TDEVINFOCollector_GetHardwarePlatformVendor(TDEVINFOCollector* self,
 					    DEVINFOCollector_OnGetCallback in_callback,
 					    sse_pointer in_user_data)
 {
   LOG_WARN("This function should not be called. Concrete function for each gateways should be called.");
-  return TDEVINFOCollector_ReturnDefaultValue(self, in_callback, in_user_data, "Unknown");
+  return TDEVINFOCollector_ReturnNoEntry(self, in_callback, in_user_data);
 }
 
 sse_int
@@ -134,7 +147,7 @@ TDEVINFOCollector_GetHardwarePlatformProduct(TDEVINFOCollector* self,
 					     sse_pointer in_user_data)
 {
   LOG_WARN("This function should not be called. Concrete function for each gateways should be called.");
-  return TDEVINFOCollector_ReturnDefaultValue(self, in_callback, in_user_data, "Unknown");
+  return TDEVINFOCollector_ReturnNoEntry(self, in_callback, in_user_data);
 }
 
 sse_int
@@ -143,7 +156,7 @@ TDEVINFOCollector_GetHardwarePlatformModel(TDEVINFOCollector* self,
 					   sse_pointer in_user_data)
 {
   LOG_WARN("This function should not be called. Concrete function for each gateways should be called.");
-  return TDEVINFOCollector_ReturnDefaultValue(self, in_callback, in_user_data, "Unknown");
+  return TDEVINFOCollector_ReturnNoEntry(self, in_callback, in_user_data);
 }
 
 sse_int
@@ -153,35 +166,34 @@ TDEVINFOCollector_GetHardwarePlatformSerial(TDEVINFOCollector* self,
 {
   sse_int err;
   sse_char mac_addr[32];
-  MoatValue *value;
+  MoatValue *value = NULL;
+  sse_int result = SSE_E_OK;
 
   LOG_WARN("This function should not be called. Concrete function for each gateways should be called.");
-  LOG_DEBUG("Set callback = [%p] and user data= [%p]", in_callback, in_user_data);
 
   ASSERT(self);
 
   self->fOnGetCallback = in_callback;
   self->fUserData = in_user_data;
+  self->fStatus = DEVINFO_COLLECTOR_STATUS_COLLECTING;
 
   /* Use MAC address of primary network interface instead of HW serial number. */
   err = SseUtilNetInfo_GetHwAddressCstr("eth0", mac_addr, sizeof(mac_addr));
   if (err != SSE_E_OK) {
-    /* In case of error, pass "Unknown" */
     LOG_WARN("SseUtilNetInfo_GetHwAddressCstr(if=[eth0], ...) ... failed with [%s].", sse_get_error_string(err));
-    sse_strcpy(mac_addr, "Unknown");
+    value = NULL;
+    result = SSE_E_NOENT;
+  } else {
+    value = moat_value_new_string(mac_addr, 0, sse_true);
+    ASSERT(value);
+    result = SSE_E_OK;
+  }
+  self->fOnGetCallback(value, self->fUserData, result);
+
+  if (value) {
+    moat_value_free(value);
   }
 
-  value = moat_value_new_string(mac_addr, 0, sse_true);
-  ASSERT(value);
-
-  /* Call callback */
-  if (self->fOnGetCallback) {
-    LOG_DEBUG("Call callback = [%p]", self->fOnGetCallback);
-    self->fOnGetCallback(value, self->fUserData, SSE_E_OK);
-  }
-
-  /* Cleanup */
-  moat_value_free(value);
   self->fStatus = DEVINFO_COLLECTOR_STATUS_COMPLETED;
   return SSE_E_OK;
 }
@@ -192,7 +204,7 @@ TDEVINFOCollector_GetHardwarePlatformHwVersion(TDEVINFOCollector* self,
 					       sse_pointer in_user_data)
 {
   LOG_WARN("This function should not be called. Concrete function for each gateways should be called.");
-  return TDEVINFOCollector_ReturnDefaultValue(self, in_callback, in_user_data, "Unknown");
+  return TDEVINFOCollector_ReturnNoEntry(self, in_callback, in_user_data);
 }
 
 sse_int
@@ -201,7 +213,7 @@ TDEVINFOCollector_GetHardwarePlatformFwVersion(TDEVINFOCollector* self,
 					       sse_pointer in_user_data)
 {
   LOG_WARN("This function should not be called. Concrete function for each gateways should be called.");
-  return TDEVINFOCollector_ReturnDefaultValue(self, in_callback, in_user_data, "Unknown");
+  return TDEVINFOCollector_ReturnNoEntry(self, in_callback, in_user_data);
 }
 
 sse_int
@@ -212,6 +224,7 @@ TDEVINFOCollector_GetHardwarePlatformDeviceId(TDEVINFOCollector* self,
   sse_int err;
   MoatValue *value = NULL;
   sse_char *device_id = NULL;
+  sse_int result = SSE_E_OK;
 
   LOG_DEBUG("Set callback = [%p] and user data= [%p]", in_callback, in_user_data);
 
@@ -219,34 +232,33 @@ TDEVINFOCollector_GetHardwarePlatformDeviceId(TDEVINFOCollector* self,
 
   self->fOnGetCallback = in_callback;
   self->fUserData = in_user_data;
+  self->fStatus = DEVINFO_COLLECTOR_STATUS_COLLECTING;
 
   /* Get DeviceId */
-  self->fStatus = DEVINFO_COLLECTOR_STATUS_COLLECTING;
   err = moat_get_device_id(self->fMoat, &device_id);
   if (err != SSE_E_OK) {
     LOG_ERROR("moat_get_device_id() ... failed with [%s].", sse_get_error_string(err));
-    goto error_exit;
+    value = NULL;
+    result = SSE_E_NOENT;
+  } else {
+    value = moat_value_new_string(device_id, 0, sse_true);
+    ASSERT(value);
   }
 
   /* Call callback */
   if (self->fOnGetCallback) {
-    LOG_DEBUG("Call callback = [%p]", self->fOnGetCallback);
-    value = moat_value_new_string(device_id, 0, sse_true);
-    ASSERT(value);
-    self->fOnGetCallback(value, self->fUserData, SSE_E_OK);
-    moat_value_free(value);
+    self->fOnGetCallback(value, self->fUserData, result);
   }
 
-  /* Cleanup */
-  sse_free(device_id);
+  if (value) {
+    moat_value_free(value);
+  }
+  if (device_id) {
+    sse_free(device_id);
+  }
+
   self->fStatus = DEVINFO_COLLECTOR_STATUS_COMPLETED;
   return SSE_E_OK;
-
-  /* Abnormal end */
- error_exit:
-  self->fStatus = DEVINFO_COLLECTOR_STATUS_ABEND;
-  if (device_id) sse_free(device_id);
-  return err;
 }
 
 sse_int
@@ -263,7 +275,7 @@ TDEVINFOCollector_GetHardwareModemType(TDEVINFOCollector* self,
 				       sse_pointer in_user_data)
 {
   LOG_WARN("This function should not be called. Concrete function for each gateways should be called.");
-  return TDEVINFOCollector_ReturnDefaultValue(self, in_callback, in_user_data, "Unknown");
+  return TDEVINFOCollector_ReturnNoEntry(self, in_callback, in_user_data);
 }
 
 
@@ -273,7 +285,7 @@ TDEVINFOCollector_GetHardwareModemHwVersion(TDEVINFOCollector* self,
 					    sse_pointer in_user_data)
 {
   LOG_WARN("This function should not be called. Concrete function for each gateways should be called.");
-  return TDEVINFOCollector_ReturnDefaultValue(self, in_callback, in_user_data, "Unknown");
+  return TDEVINFOCollector_ReturnNoEntry(self, in_callback, in_user_data);
 }
 
 
@@ -283,7 +295,7 @@ TDEVINFOCollector_GetHardwareModemFwVersion(TDEVINFOCollector* self,
 					    sse_pointer in_user_data)
 {
   LOG_WARN("This function should not be called. Concrete function for each gateways should be called.");
-  return TDEVINFOCollector_ReturnDefaultValue(self, in_callback, in_user_data, "Unknown");
+  return TDEVINFOCollector_ReturnNoEntry(self, in_callback, in_user_data);
 }
 
 static MoatObject*
@@ -393,95 +405,43 @@ TDEVINFOCollector_GetHardwareNetworkInterface(TDEVINFOCollector* self,
 
   self->fOnGetCallback = in_callback;
   self->fUserData = in_user_data;
+  self->fStatus = DEVINFO_COLLECTOR_STATUS_COLLECTING;
 
   /* Get network interface information */
   err = SseUtilNetInfo_GetInterfaceList(&if_list);
-  if (err != SSE_E_OK) {
-    LOG_ERROR("SseUtilNetInfo_GetInterfaceList() ... failed with [%s].", err);
-    goto error_exit;
+  if ((err != SSE_E_OK) || (sse_slist_length(if_list) == 0)) {
+    if (err == SSE_E_OK) {
+      LOG_WARN("No network interface was found.");
+    } else {
+      LOG_ERROR("SseUtilNetInfo_GetInterfaceList() ... failed with [%s].", sse_get_error_string(err));
+    }
+    if (self->fOnGetCallback) {
+      self->fOnGetCallback(NULL, self->fUserData, SSE_E_NOENT);
+    }
+    self->fStatus = DEVINFO_COLLECTOR_STATUS_COMPLETED;
+    return SSE_E_OK;
   }
-  LOG_DEBUG("Network I/F num = [%d]", sse_slist_length(if_list));
 
+  /* Get detailed interface configuration. */
   for (i = if_list; i != NULL; i = sse_slist_next(i)) {
     object = DEVINFOCollector_GetNetworkConfiguration(sse_slist_data(i));
-    ASSERT(object);
+    if (object == NULL) {
+      LOG_ERROR("DEVINFOCollector_GetNetworkConfiguration() ... failed.");
+      continue;
+    }
     value = moat_value_new_object(object, sse_true);
     ASSERT(value);
-    /* Call callback */
     if (self->fOnGetCallback) {
-      LOG_DEBUG("Call callback = [%p]", self->fOnGetCallback);
       self->fOnGetCallback(value, self->fUserData, SSE_E_OK);
     }
     moat_value_free(value);
-    value = NULL;
     moat_object_free(object);
-    object = NULL;
   }
 
   /* Cleanup */
   DEVINFOCollector_FreeListedSSEString(if_list);
   self->fStatus = DEVINFO_COLLECTOR_STATUS_COMPLETED;
 
-  return SSE_E_OK;
-
-  /* Abnormal end */
- error_exit:
-  self->fStatus = DEVINFO_COLLECTOR_STATUS_ABEND;
-  if (object) moat_object_free(object);
-  if (value) moat_value_free(value);
-  DEVINFOCollector_FreeListedSSEString(if_list);
-  return err;
-}
-
-static sse_int
-DEVINFOCollector_GetSoftwareOSType(MoatValue **out_os_type)
-{
-  FILE *fd;
-  sse_char buff[64];
-  MoatValue *os_type = NULL;
-
-  fd = fopen(DEVINFO_COLLECTOR_PROCFS_OS_TYPE, "r");
-  if (fd == NULL) {
-    LOG_ERROR("fopen(" DEVINFO_COLLECTOR_PROCFS_OS_TYPE ") ... failed with [%s].", strerror(errno));
-    return SSE_E_ACCES;
-  }
-  if (fgets(buff, sizeof(buff), fd) == NULL) {
-    LOG_ERROR("fgets() ... failed.");
-    fclose(fd);
-    return SSE_E_ACCES;
-  }
-  fclose(fd);
-
-  LOG_DEBUG("OS Type = [%s]", buff);
-  os_type = moat_value_new_string(buff, 0, sse_true);
-  ASSERT(os_type);
-  *out_os_type = os_type;
-  return SSE_E_OK;
-}
-
-static sse_int
-DEVINFOCollector_GetSoftwareOSVersion(MoatValue **out_os_version)
-{
-  FILE *fd;
-  sse_char buff[64];
-  MoatValue *os_version = NULL;
-
-  fd = fopen(DEVINFO_COLLECTOR_PROCFS_OS_VERSION, "r");
-  if (fd == NULL) {
-    LOG_ERROR("fopen(" DEVINFO_COLLECTOR_PROCFS_OS_TYPE ") ... failed with [%s].", strerror(errno));
-    return SSE_E_ACCES;
-  }
-  if (fgets(buff, sizeof(buff), fd) == NULL) {
-    LOG_ERROR("fgets() ... failed.");
-    fclose(fd);
-    return SSE_E_ACCES;
-  }
-  fclose(fd);
-
-  LOG_DEBUG("OS Version = [%s]", buff);
-  os_version = moat_value_new_string(buff, 0, sse_true);
-  ASSERT(os_version);
-  *out_os_version = os_version;
   return SSE_E_OK;
 }
 
@@ -490,8 +450,9 @@ DEVINFOCollector_GetHardwareNetworkNameserverOnComplateCallback(TSseUtilShellCom
 								sse_pointer in_user_data,
 								sse_int in_result)
 {
-  ASSERT(in_user_data);
   TDEVINFOCollector *collector = (TDEVINFOCollector *)in_user_data;
+  ASSERT(collector);
+
   LOG_INFO("collector=[%p], command=[%s] has been completed.", collector, self->fShellCommand);
 
   /* Cleanup */
@@ -507,10 +468,10 @@ DEVINFOCollector_GetHardwareNetworkNameserverOnReadCallback(TSseUtilShellCommand
   sse_char *buff;
   MoatValue *value;
 
-  ASSERT(in_user_data);
   TDEVINFOCollector *collector = (TDEVINFOCollector *)in_user_data;
-  LOG_DEBUG("collector=[%p], command=[%s] is readable.", collector, self->fShellCommand);
+  ASSERT(collector);
 
+  LOG_DEBUG("collector=[%p], command=[%s] is readable.", collector, self->fShellCommand);
   while ((err = TSseUtilShellCommand_ReadLine(self, &buff, sse_true)) == SSE_E_OK) {
     LOG_DEBUG("nameserver=[%s]", buff);
     if (sse_strncmp("nameserver", buff, sse_strlen("nameserver")) == 0) {
@@ -533,7 +494,6 @@ DEVINFOCollector_GetHardwareNetworkNameserverOnReadCallback(TSseUtilShellCommand
     if (self->fOnErrorCallback) {
       self->fOnErrorCallback(self, self->fOnErrorCallbackUserData, err, sse_get_error_string(err));
     }
-    return;
   }
 
   return;
@@ -545,10 +505,13 @@ TDEVINFOCollector_GetHardwareNetworkNameserverOnErrorCallback(TSseUtilShellComma
 							      sse_int in_error_code,
 							      const sse_char* in_message)
 {
-  ASSERT(in_user_data);
   TDEVINFOCollector *collector = (TDEVINFOCollector *)in_user_data;
+  ASSERT(collector);
 
   LOG_ERROR("collector=[%p], command=[%s] failed with code=[%d], message=[%s]", collector, self->fShellCommand, in_error_code, in_message);
+  if(collector->fOnGetCallback) {
+      collector->fOnGetCallback(NULL, collector->fUserData, in_error_code);
+  }
   collector->fStatus = DEVINFO_COLLECTOR_STATUS_ABEND;
 }
 
@@ -563,13 +526,14 @@ TDEVINFOCollector_GetHardwareNetworkNameserver(TDEVINFOCollector* self,
 
   self->fOnGetCallback = in_callback;
   self->fUserData = in_user_data;
+  self->fStatus = DEVINFO_COLLECTOR_STATUS_COLLECTING;
 
   /* Create command to read /etc/resolv.conf */
   err = TSseUtilShellCommand_Initialize(&self->fCommand);
   ASSERT(err == SSE_E_OK);
   err = TSseUtilShellCommand_SetShellCommand(&self->fCommand, "cat");
   ASSERT(err == SSE_E_OK);
-  err = TSseUtilShellCommand_AddArgument(&self->fCommand, "/etc/resolv.conf");
+  err = TSseUtilShellCommand_AddArgument(&self->fCommand, "/etc/resolv.conf"); //TODO fix me.
   ASSERT(err == SSE_E_OK);
 
   /* Set callbacks */
@@ -580,9 +544,14 @@ TDEVINFOCollector_GetHardwareNetworkNameserver(TDEVINFOCollector* self,
   err=  TSseUtilShellCommand_SetOnErrorCallback(&self->fCommand,TDEVINFOCollector_GetHardwareNetworkNameserverOnErrorCallback, self);
   ASSERT(err == SSE_E_OK);
 
-  self->fStatus = DEVINFO_COLLECTOR_STATUS_COLLECTING;
   err = TSseUtilShellCommand_Execute(&self->fCommand);
-  ASSERT(err == SSE_E_OK); //TODO fix me.
+  if (err != SSE_E_OK) {
+    LOG_ERROR("TSseUtilShellCommand_Execute() ... failed with [%s].", sse_get_error_string(err));
+    if(self->fOnGetCallback) {
+      self->fOnGetCallback(NULL, self->fUserData, err);
+    }
+    self->fStatus = DEVINFO_COLLECTOR_STATUS_COMPLETED;
+  }
 
   return SSE_E_OK;
 }
@@ -592,16 +561,25 @@ TDEVINFOCollector_GetHardwareSim(TDEVINFOCollector* self,
 				 DEVINFOCollector_OnGetCallback in_callback,
 				 sse_pointer in_user_data)
 {
-  sse_int err;
-  MoatObject *object = NULL;
-  MoatValue *value = NULL;
-
-  LOG_DEBUG("Set callback = [%p] and user data= [%p]", in_callback, in_user_data);
-
   ASSERT(self);
 
   self->fOnGetCallback = in_callback;
   self->fUserData = in_user_data;
+  self->fStatus = DEVINFO_COLLECTOR_STATUS_COLLECTING;
+
+#if 0
+  if(self->fOnGetCallback) {
+    self->fOnGetCallback(NULL, self->fUserData, SSE_E_NOENT);
+  }
+  return SSE_E_OK;
+#else
+  /*
+   * Following code is just a referrence implementation.
+   */
+
+  sse_int err;
+  MoatObject *object = NULL;
+  MoatValue *value = NULL;
 
   /* Create MoatObject */
   object = moat_object_new();
@@ -649,6 +627,79 @@ TDEVINFOCollector_GetHardwareSim(TDEVINFOCollector* self,
   self->fStatus = DEVINFO_COLLECTOR_STATUS_ABEND;
   if (object) moat_object_free(object);
   return err;
+#endif
+}
+
+static sse_int
+DEVINFOCollector_GetSoftwareOSType(MoatValue **out_os_type)
+{
+  FILE *fd;
+  sse_char buff[64];
+  MoatValue *os_type = NULL;
+
+  fd = fopen(DEVINFO_COLLECTOR_PROCFS_OS_TYPE, "r");
+  if (fd == NULL) {
+    LOG_ERROR("fopen(" DEVINFO_COLLECTOR_PROCFS_OS_TYPE ") ... failed with [%s].", strerror(errno));
+    return SSE_E_ACCES;
+  }
+  if (fgets(buff, sizeof(buff), fd) == NULL) {
+    LOG_ERROR("fgets() ... failed.");
+    fclose(fd);
+    return SSE_E_ACCES;
+  }
+  fclose(fd);
+
+  /* Strip CRLF */
+  {
+    sse_char *p = buff;
+    while (*p++ != '\0') {
+      if (*p == 0x0d || *p == 0x0a) {
+	*p ='\0';
+      }
+    }
+  }
+
+  LOG_DEBUG("OS Type = [%s]", buff);
+  os_type = moat_value_new_string(buff, 0, sse_true);
+  ASSERT(os_type);
+  *out_os_type = os_type;
+  return SSE_E_OK;
+}
+
+static sse_int
+DEVINFOCollector_GetSoftwareOSVersion(MoatValue **out_os_version)
+{
+  FILE *fd;
+  sse_char buff[64];
+  MoatValue *os_version = NULL;
+
+  fd = fopen(DEVINFO_COLLECTOR_PROCFS_OS_VERSION, "r");
+  if (fd == NULL) {
+    LOG_ERROR("fopen(" DEVINFO_COLLECTOR_PROCFS_OS_TYPE ") ... failed with [%s].", strerror(errno));
+    return SSE_E_ACCES;
+  }
+  if (fgets(buff, sizeof(buff), fd) == NULL) {
+    LOG_ERROR("fgets() ... failed.");
+    fclose(fd);
+    return SSE_E_ACCES;
+  }
+  fclose(fd);
+
+  /* Strip CRLF */
+  {
+    sse_char *p = buff;
+    while (*p++ != '\0') {
+      if (*p == 0x0d || *p == 0x0a) {
+        *p ='\0';
+      }
+    }
+  }
+
+  LOG_DEBUG("OS Version = [%s]", buff);
+  os_version = moat_value_new_string(buff, 0, sse_true);
+  ASSERT(os_version);
+  *out_os_version = os_version;
+  return SSE_E_OK;
 }
 
 sse_int
@@ -668,9 +719,9 @@ TDEVINFOCollector_GetSoftwareOS(TDEVINFOCollector* self,
 
   self->fOnGetCallback = in_callback;
   self->fUserData = in_user_data;
+  self->fStatus = DEVINFO_COLLECTOR_STATUS_COLLECTING;
 
   /* Get OS Type (e.g. Linux) */
-  self->fStatus = DEVINFO_COLLECTOR_STATUS_COLLECTING;
   err = DEVINFOCollector_GetSoftwareOSType(&os_type);
   if (err != SSE_E_OK) {
     if(self->fOnGetCallback) {
@@ -691,12 +742,14 @@ TDEVINFOCollector_GetSoftwareOS(TDEVINFOCollector* self,
   /* Create MoatObject */
   object = moat_object_new();
   ASSERT(object);
-  err = moat_object_add_value(object, DEVINFO_KEY_OS_TYPE, os_type, 0, sse_true);
+  /* err = moat_object_add_value(object, DEVINFO_KEY_OS_TYPE, os_type, 0, sse_true); */
+  err = moat_object_add_value(object, DEVINFO_KEY_OS_TYPE, os_type, 0, sse_false);
   if (err != SSE_E_OK) {
     LOG_ERROR("moat_object_set_string_value() ... failed with [%s].", sse_get_error_string(err));
     goto error_exit;
   }
-  err = moat_object_add_value(object, DEVINFO_KEY_OS_VERSION, os_version, 0, sse_true);
+  /* err = moat_object_add_value(object, DEVINFO_KEY_OS_VERSION, os_version, 0, sse_true); */
+  err = moat_object_add_value(object, DEVINFO_KEY_OS_VERSION, os_version, 0, sse_false);
   if (err != SSE_E_OK) {
     LOG_ERROR("moat_object_set_string_value() ... failed with [%s].", sse_get_error_string(err));
     goto error_exit;
@@ -711,14 +764,24 @@ TDEVINFOCollector_GetSoftwareOS(TDEVINFOCollector* self,
   }
 
   /* Cleanup */
-  moat_value_free(os_type);
-  moat_value_free(os_version);
+  /* os_type and os_version are pointing a heap area allocated by moat_value_new_string().
+   * When these MoatValue were added to the MoatObject wiht in_dup=TRUE, invalid free are
+   * deteced in moat_object_free().
+   * As workaround, add os_type and os_version into the MoatObject with in_dup=FALSE and
+   * ommit moat_value_free for os_type and os_version.
+   *
+   * moat_value_free(os_type);
+   * moat_value_free(os_version);
+   */
   moat_object_free(object);
   self->fStatus = DEVINFO_COLLECTOR_STATUS_COMPLETED;
   return SSE_E_OK;
 
   /* Abnormal end */
  error_exit:
+  if(self->fOnGetCallback) {
+    self->fOnGetCallback(NULL, self->fUserData, err);
+  }
   self->fStatus = DEVINFO_COLLECTOR_STATUS_ABEND;
   if (os_type) moat_value_free(os_type);
   if (os_version) moat_value_free(os_version);
@@ -743,6 +806,7 @@ TDEVINFOCollector_GetSoftwareSscl(TDEVINFOCollector* self,
 
   self->fOnGetCallback = in_callback;
   self->fUserData = in_user_data;
+  self->fStatus = DEVINFO_COLLECTOR_STATUS_COLLECTING;
 
   sscl_version = sse_get_version();
   ASSERT(sscl_version);
@@ -771,9 +835,6 @@ TDEVINFOCollector_GetSoftwareSscl(TDEVINFOCollector* self,
   err = moat_object_add_string_value(object, DEVINFO_KEY_SSCL_SDK_VERSION, (sse_char*)moat_sdk_version, sse_strlen(moat_sdk_version), sse_true, sse_false); 
   if (err != SSE_E_OK) {
     LOG_ERROR("moat_object_set_string_value() ... failed with [%s].", sse_get_error_string(err));
-    if(self->fOnGetCallback) {
-      self->fOnGetCallback(NULL, self->fUserData, err);
-    }
     goto error_exit;
   }
 
@@ -792,6 +853,9 @@ TDEVINFOCollector_GetSoftwareSscl(TDEVINFOCollector* self,
 
   /* Abnormal end */
  error_exit:
+  if(self->fOnGetCallback) {
+    self->fOnGetCallback(NULL, self->fUserData, err);
+  }
   self->fStatus = DEVINFO_COLLECTOR_STATUS_ABEND;
   if (object) moat_object_free(object);
   return err;

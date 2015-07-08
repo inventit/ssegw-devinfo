@@ -29,6 +29,13 @@
 #include <stdlib.h>
 #define ASSERT(cond) if(!(cond)) { LOG_ERROR("ASSERTION FAILED:" #cond); abort(); }
 
+static sse_int TDEVINFOManager_Execute(TDEVINFOManager *self);
+static sse_int TDEVINFOManager_EnterNextState(TDEVINFOManager *self);
+static sse_int TDEVINFOManager_LeaveState(TDEVINFOManager *self);
+static sse_int TDEVINFOManager_ProgressSubState(TDEVINFOManager *self);
+static sse_int TDEVINFOManager_Progress(TDEVINFOManager *self);
+static sse_bool DEVINFOManager_Progress(sse_int in_timer_id, sse_pointer in_user_data);
+
 static void DEVINFOManager_GetVendorCallback(MoatValue* in_vendor, sse_pointer in_user_data, sse_int in_error_code);
 static void DEVINFOManager_GetVendorCallback(MoatValue* in_vendor, sse_pointer in_user_data, sse_int in_error_code);
 static void DEVINFOManager_GetProductCallback(MoatValue* in_product, sse_pointer in_user_data, sse_int in_error_code);
@@ -43,14 +50,9 @@ static void DEVINFOManager_GetModemHwVersionCallback(MoatValue* in_version, sse_
 static void DEVINFOManager_GetModemFwVersionCallback(MoatValue* in_version, sse_pointer in_user_data, sse_int in_error_code);
 static void DEVINFOManager_GetNetworkInterfaceCallback(MoatValue* in_if, sse_pointer in_user_data, sse_int in_error_code);
 static void DEVINFOManager_GetNetworkNameserverCallback(MoatValue* in_nameserver, sse_pointer in_user_data, sse_int in_error_code);
-
-static sse_int TDEVINFOManager_Execute(TDEVINFOManager *self);
-static sse_int TDEVINFOManager_EnterNextState(TDEVINFOManager *self);
-static sse_int TDEVINFOManager_LeaveState(TDEVINFOManager *self);
-static sse_int TDEVINFOManager_ProgressSubState(TDEVINFOManager *self);
-static sse_int TDEVINFOManager_Progress(TDEVINFOManager *self);
-static sse_bool DEVINFOManager_Progress(sse_int in_timer_id, sse_pointer in_user_data);
-
+static void DEVINFOManager_GetSimCallback(MoatValue* in_sim, sse_pointer in_user_data, sse_int in_error_code);
+static void DEVINFOManager_GetOsCallback(MoatValue* in_sim, sse_pointer in_user_data, sse_int in_error_code);
+static void DEVINFOManager_GetSsclCallback(MoatValue* in_sim, sse_pointer in_user_data, sse_int in_error_code);
 
 const static TDEVINFOManagerGetDevinfoProc DEVINFO_MANAGER_GET_DEVINFO_PROC_TABLE[DEVINFO_MANAGER_STATEs] = {
   { NULL, NULL },
@@ -61,12 +63,15 @@ const static TDEVINFOManagerGetDevinfoProc DEVINFO_MANAGER_GET_DEVINFO_PROC_TABL
   { TDEVINFOCollector_GetHardwarePlatformHwVersion, DEVINFOManager_GetHwVersionCallback },
   { TDEVINFOCollector_GetHardwarePlatformFwVersion, DEVINFOManager_GetFwVersionCallback },
   { TDEVINFOCollector_GetHardwarePlatformDeviceId,  DEVINFOManager_GetDeviceIdCallback },
-  { TDEVINFOCollector_GetHardwarePlatformCategory, DEVINFOManager_GetCategoryCallback },
+  { TDEVINFOCollector_GetHardwarePlatformCategory,  DEVINFOManager_GetCategoryCallback },
   { TDEVINFOCollector_GetHardwareModemType,         DEVINFOManager_GetModemTypeCallback },
   { TDEVINFOCollector_GetHardwareModemHwVersion,    DEVINFOManager_GetModemHwVersionCallback },
   { TDEVINFOCollector_GetHardwareModemFwVersion,    DEVINFOManager_GetModemFwVersionCallback },
   { TDEVINFOCollector_GetHardwareNetworkInterface,  DEVINFOManager_GetNetworkInterfaceCallback },
   { TDEVINFOCollector_GetHardwareNetworkNameserver, DEVINFOManager_GetNetworkNameserverCallback },
+  { TDEVINFOCollector_GetHardwareSim,               DEVINFOManager_GetSimCallback },
+  { TDEVINFOCollector_GetSoftwareOS,                DEVINFOManager_GetOsCallback },
+  { TDEVINFOCollector_GetSoftwareSscl,              DEVINFOManager_GetSsclCallback },
   { NULL, NULL }
 };
 
@@ -127,7 +132,10 @@ TDEVINFOManager_GetStateWithCstr(TDEVINFOManager *self)
   RETURN_STRING_IF_MATCH(DEVINFO_MANAGER_STATE_COLLECTING_HARDWARE_MODEM_FW_VERSION,    TDEVINFOManager_GetState(self));
   RETURN_STRING_IF_MATCH(DEVINFO_MANAGER_STATE_COLLECTING_HARDWARE_NETWORK_INTERFACE,   TDEVINFOManager_GetState(self));
   RETURN_STRING_IF_MATCH(DEVINFO_MANAGER_STATE_COLLECTING_HARDWARE_NETWORK_NAMESERVER,  TDEVINFOManager_GetState(self));
-  RETURN_STRING_IF_MATCH(DEVINFO_MANAGER_STATE_COLLECTION_DONE, TDEVINFOManager_GetState(self));
+  RETURN_STRING_IF_MATCH(DEVINFO_MANAGER_STATE_COLLECTING_HARDWARE_SIM,                 TDEVINFOManager_GetState(self));
+  RETURN_STRING_IF_MATCH(DEVINFO_MANAGER_STATE_COLLECTING_SOFTWARE_OS,                  TDEVINFOManager_GetState(self));
+  RETURN_STRING_IF_MATCH(DEVINFO_MANAGER_STATE_COLLECTING_SOFTWARE_SSCL,                TDEVINFOManager_GetState(self));
+  RETURN_STRING_IF_MATCH(DEVINFO_MANAGER_STATE_COLLECTION_DONE,                         TDEVINFOManager_GetState(self));
   return "Non-defined state";
 }
 
@@ -285,110 +293,228 @@ TDEVINFOManager_ProgressSubState(TDEVINFOManager *self)
 static void
 DEVINFOManager_GetVendorCallback(MoatValue* in_vendor, sse_pointer in_user_data, sse_int in_error_code)
 {
-  ASSERT(in_vendor);
-  ASSERT(in_user_data);
+  MoatValue *value = NULL;
   TDEVINFOManager *self = (TDEVINFOManager *)in_user_data;
-  TDEVINFORepository_SetHardwarePlatformVendor(&self->fRepository, in_vendor);
-  return;
+  ASSERT(self);
+
+  if (in_error_code == SSE_E_OK) {
+    value = in_vendor;
+  } else if (in_error_code == SSE_E_NOENT) {
+    value = moat_value_new_string("NO DATA", 0, sse_true);
+  } else {
+    LOG_ERROR("Getting devinfo has been failed with [%s].", sse_get_error_string(in_error_code));
+  }
+
+  if (value) {
+    TDEVINFORepository_SetHardwarePlatformVendor(&self->fRepository, value);
+  }
+
+  if (value != in_vendor) {
+    moat_value_free(value);
+  }
 }
 
 static void
 DEVINFOManager_GetProductCallback(MoatValue* in_product, sse_pointer in_user_data, sse_int in_error_code)
 {
-  ASSERT(in_product);
-  ASSERT(in_user_data);
+  MoatValue *value = NULL;
   TDEVINFOManager *self = (TDEVINFOManager *)in_user_data;
-  TDEVINFORepository_SetHardwarePlatformProduct(&self->fRepository, in_product);
+  ASSERT(self);
+
+  if (in_error_code == SSE_E_OK) {
+    value = in_product;
+  } else if (in_error_code == SSE_E_NOENT) {
+    value = moat_value_new_string("NO DATA", 0, sse_true);
+  } else {
+    LOG_ERROR("Getting devinfo has been failed with [%s].", sse_get_error_string(in_error_code));
+  }
+
+  if (value) {
+    TDEVINFORepository_SetHardwarePlatformProduct(&self->fRepository, value);
+  }
+
+  if (value != in_product) {
+    moat_value_free(value);
+  }    
+
   return;
 }
 
 static void
 DEVINFOManager_GetModelCallback(MoatValue* in_model, sse_pointer in_user_data, sse_int in_error_code)
 {
-  ASSERT(in_model);
-  ASSERT(in_user_data);
+  MoatValue *value = NULL;
   TDEVINFOManager *self = (TDEVINFOManager *)in_user_data;
-  TDEVINFORepository_SetHardwarePlatformModel(&self->fRepository, in_model);
+  ASSERT(self);
+
+  if (in_error_code == SSE_E_OK) {
+    value = in_model;
+  } else if (in_error_code == SSE_E_NOENT) {
+    value = moat_value_new_string("NO DATA", 0, sse_true);
+  } else {
+    LOG_ERROR("Getting devinfo has been failed with [%s].", sse_get_error_string(in_error_code));
+  }
+
+  if (value) {
+    TDEVINFORepository_SetHardwarePlatformModel(&self->fRepository, value);
+  }
+
+  if (value != in_model) {
+    moat_value_free(value);
+  }    
+
   return;
 }
 
 static void
 DEVINFOManager_GetSerialCallback(MoatValue* in_serial, sse_pointer in_user_data, sse_int in_error_code)
 {
-  ASSERT(in_serial);
-  ASSERT(in_user_data);
+  MoatValue *value = NULL;
   TDEVINFOManager *self = (TDEVINFOManager *)in_user_data;
-  TDEVINFORepository_SetHardwarePlatformSerial(&self->fRepository, in_serial);
+  ASSERT(self);
+
+  if (in_error_code == SSE_E_OK) {
+    value = in_serial;
+  } else if (in_error_code == SSE_E_NOENT) {
+    value = moat_value_new_string("NO DATA", 0, sse_true);
+  } else {
+    LOG_ERROR("Getting devinfo has been failed with [%s].", sse_get_error_string(in_error_code));
+  }
+
+  if (value) {
+    TDEVINFORepository_SetHardwarePlatformSerial(&self->fRepository, value);
+  }
+
+  if (value != in_serial) {
+    moat_value_free(value);
+  }    
+
   return;
 }
 
 static void
 DEVINFOManager_GetHwVersionCallback(MoatValue* in_version, sse_pointer in_user_data, sse_int in_error_code)
 {
-  ASSERT(in_version);
-  ASSERT(in_user_data);
   TDEVINFOManager *self = (TDEVINFOManager *)in_user_data;
-  TDEVINFORepository_SetHardwarePlatformHwVersion(&self->fRepository, in_version);
+  ASSERT(self);
+
+  if (in_error_code == SSE_E_OK) {
+    TDEVINFORepository_SetHardwarePlatformHwVersion(&self->fRepository, in_version);
+  } else {
+    LOG_ERROR("Getting devinfo has been failed with [%s].", sse_get_error_string(in_error_code));
+  }
+
   return;
 }
 
 static void
 DEVINFOManager_GetFwVersionCallback(MoatValue* in_version, sse_pointer in_user_data, sse_int in_error_code)
 {
-  ASSERT(in_version);
-  ASSERT(in_user_data);
+  MoatValue *value = NULL;
   TDEVINFOManager *self = (TDEVINFOManager *)in_user_data;
-  TDEVINFORepository_SetHardwarePlatformFwVersion(&self->fRepository, in_version);
+  ASSERT(self);
+
+  if (in_error_code == SSE_E_OK) {
+    value = in_version;
+  } else if (in_error_code == SSE_E_NOENT) {
+    value = moat_value_new_string("NO DATA", 0, sse_true);
+  } else {
+    LOG_ERROR("Getting devinfo has been failed with [%s].", sse_get_error_string(in_error_code));
+  }
+
+  if (value) {
+    TDEVINFORepository_SetHardwarePlatformFwVersion(&self->fRepository, value);
+  }
+
+  if (value != in_version) {
+    moat_value_free(value);
+  }
   return;
 }
 
 static void
 DEVINFOManager_GetDeviceIdCallback(MoatValue* in_device_id, sse_pointer in_user_data, sse_int in_error_code)
 {
-  ASSERT(in_device_id);
-  ASSERT(in_user_data);
+  MoatValue *value = NULL;
   TDEVINFOManager *self = (TDEVINFOManager *)in_user_data;
-  TDEVINFORepository_SetHardwarePlatformDeviceId(&self->fRepository, in_device_id);
+  ASSERT(self);
+
+  if (in_error_code == SSE_E_OK) {
+    value = in_device_id;
+  } else if (in_error_code == SSE_E_NOENT) {
+    value = moat_value_new_string("NO DATA", 0, sse_true);
+  } else {
+    LOG_ERROR("Getting devinfo has been failed with [%s].", sse_get_error_string(in_error_code));
+  }
+
+  if (value) {
+    TDEVINFORepository_SetHardwarePlatformDeviceId(&self->fRepository, value);
+  }
+
+  if (value != in_device_id) {
+    moat_value_free(value);
+  }
+
   return;
 }
 
 static void
 DEVINFOManager_GetCategoryCallback(MoatValue* in_category, sse_pointer in_user_data, sse_int in_error_code)
 {
-  ASSERT(in_category);
-  ASSERT(in_user_data);
   TDEVINFOManager *self = (TDEVINFOManager *)in_user_data;
-  TDEVINFORepository_SetHardwarePlatformCategory(&self->fRepository, in_category);
+  ASSERT(self);
+
+  if (in_error_code == SSE_E_OK) {
+    TDEVINFORepository_SetHardwarePlatformCategory(&self->fRepository, in_category);
+  } else {
+    LOG_ERROR("Getting devinfo has been failed with [%s].", sse_get_error_string(in_error_code));
+  }
+
   return;
 }
 
 static void
 DEVINFOManager_GetModemTypeCallback(MoatValue* in_type, sse_pointer in_user_data, sse_int in_error_code)
 {
-  ASSERT(in_type);
-  ASSERT(in_user_data);
   TDEVINFOManager *self = (TDEVINFOManager *)in_user_data;
-  TDEVINFORepository_SetHardwareModemType(&self->fRepository, in_type);
+  ASSERT(self);
+
+  if (in_error_code == SSE_E_OK) {
+    TDEVINFORepository_SetHardwareModemType(&self->fRepository, in_type);
+  } else {
+    LOG_ERROR("Getting devinfo has been failed with [%s].", sse_get_error_string(in_error_code));
+  }
+
   return;
 }
 
 static void
 DEVINFOManager_GetModemHwVersionCallback(MoatValue* in_version, sse_pointer in_user_data, sse_int in_error_code)
 {
-  ASSERT(in_version);
-  ASSERT(in_user_data);
   TDEVINFOManager *self = (TDEVINFOManager *)in_user_data;
-  TDEVINFORepository_SetHardwareModemHwVersion(&self->fRepository, in_version);
+  ASSERT(self);
+
+  if (in_error_code == SSE_E_OK) {
+    TDEVINFORepository_SetHardwareModemHwVersion(&self->fRepository, in_version);
+  } else {
+    LOG_ERROR("Getting devinfo has been failed with [%s].", sse_get_error_string(in_error_code));
+  }
+
   return;
 }
 
 static void
 DEVINFOManager_GetModemFwVersionCallback(MoatValue* in_version, sse_pointer in_user_data, sse_int in_error_code)
 {
-  ASSERT(in_version);
-  ASSERT(in_user_data);
   TDEVINFOManager *self = (TDEVINFOManager *)in_user_data;
-  TDEVINFORepository_SetHardwareModemFwVersion(&self->fRepository, in_version);
+  ASSERT(self);
+
+  if (in_error_code == SSE_E_OK) {
+    TDEVINFORepository_SetHardwareModemFwVersion(&self->fRepository, in_version);
+  } else {
+    LOG_ERROR("Getting devinfo has been failed with [%s].", sse_get_error_string(in_error_code));
+  }
+
   return;
 }
 
@@ -404,44 +530,138 @@ DEVINFOManager_GetNetworkInterfaceCallback(MoatValue* in_if, sse_pointer in_user
   MoatValue *netmask;
   MoatValue *ipv6_addr;
 
-  ASSERT(in_if);
-  ASSERT(in_user_data);
-  
   self = (TDEVINFOManager *)in_user_data;
+  ASSERT(self);
 
-  err = moat_value_get_object(in_if, &object);
-  if (err != SSE_E_OK) {
-    LOG_ERROR("moat_value_get_object() ... failed with [%s].", sse_get_error_string(err));
-    return;
+  if (in_error_code == SSE_E_OK) {
+    err = moat_value_get_object(in_if, &object);
+    if (err != SSE_E_OK) {
+      LOG_ERROR("moat_value_get_object() ... failed with [%s].", sse_get_error_string(err));
+      return;
+    }
+
+    name = moat_object_get_value(object, DEVINFO_KEY_NET_INTERFACE_NAME);
+    if (name == NULL) {
+      LOG_ERROR("[%s] was not found in the object.", DEVINFO_KEY_NET_INTERFACE_NAME);
+      return;
+    }
+
+    hw_addr = moat_object_get_value(object, DEVINFO_KEY_NET_INTERFACE_HW_ADDR);
+    if (hw_addr == NULL) {
+      LOG_ERROR("[%s] was not found in the object.", DEVINFO_KEY_NET_INTERFACE_HW_ADDR);
+      return;
+    }
+
+    /* Following informatin is not mandatory. NULL is acceptable. */
+    ipv4_addr = moat_object_get_value(object, DEVINFO_KEY_NET_INTERFACE_IPV4_ADDR);
+    netmask = moat_object_get_value(object, DEVINFO_KEY_NET_INTERFACE_NETMASK);
+    ipv6_addr = moat_object_get_value(object, DEVINFO_KEY_NET_INTERFACE_IPV6_ADDR);
+
+    TDEVINFORepository_AddHardwareNetworkInterface(&self->fRepository, name, hw_addr, ipv4_addr, netmask, ipv6_addr);
+  } else {
+    LOG_ERROR("Getting devinfo has been failed with [%s].", sse_get_error_string(in_error_code));
   }
 
-  name = moat_object_get_value(object, DEVINFO_KEY_NET_INTERFACE_NAME);
-  if (name == NULL) {
-    LOG_ERROR("[%s] was not found in the object.", DEVINFO_KEY_NET_INTERFACE_NAME);
-    return;
-  }
-
-  hw_addr = moat_object_get_value(object, DEVINFO_KEY_NET_INTERFACE_HW_ADDR);
-  if (hw_addr == NULL) {
-    LOG_ERROR("[%s] was not found in the object.", DEVINFO_KEY_NET_INTERFACE_HW_ADDR);
-    return;
-  }
-
-  /* Following informatin is not mandatory. NULL is acceptable. */
-  ipv4_addr = moat_object_get_value(object, DEVINFO_KEY_NET_INTERFACE_IPV4_ADDR);
-  netmask = moat_object_get_value(object, DEVINFO_KEY_NET_INTERFACE_NETMASK);
-  ipv6_addr = moat_object_get_value(object, DEVINFO_KEY_NET_INTERFACE_IPV6_ADDR);
-
-  TDEVINFORepository_AddHardwareNetworkInterface(&self->fRepository, name, hw_addr, ipv4_addr, netmask, ipv6_addr);
   return;
 }
 
 static void
 DEVINFOManager_GetNetworkNameserverCallback(MoatValue* in_nameserver, sse_pointer in_user_data, sse_int in_error_code)
 {
-  ASSERT(in_nameserver);
-  ASSERT(in_user_data);
   TDEVINFOManager *self = (TDEVINFOManager *)in_user_data;
-  TDEVINFORepository_AddHardwareNetworkNameserver(&self->fRepository, in_nameserver);
+  ASSERT(self);
+
+  if (in_error_code == SSE_E_OK) {
+    TDEVINFORepository_AddHardwareNetworkNameserver(&self->fRepository, in_nameserver);
+  } else {
+    LOG_ERROR("Getting devinfo has been failed with [%s].", sse_get_error_string(in_error_code));
+  }
+
+  return;
+}
+
+static void
+DEVINFOManager_GetSimCallback(MoatValue* in_sim, sse_pointer in_user_data, sse_int in_error_code)
+{
+  TDEVINFOManager *self = (TDEVINFOManager *)in_user_data;
+  MoatObject *object;
+  MoatValue *iccid;
+  MoatValue *imsi;
+  MoatValue *msisdn;
+  sse_int err;
+
+  ASSERT(self);
+
+  if (in_error_code == SSE_E_OK) {
+    err = moat_value_get_object(in_sim, &object);
+    if (err != SSE_E_OK) {
+      LOG_ERROR("moat_value_get_object() ... failed with [%s].", sse_get_error_string(err));
+      return;
+    }
+    iccid = moat_object_get_value(object, DEVINFO_KEY_SIM_ICCID);
+    imsi = moat_object_get_value(object, DEVINFO_KEY_SIM_IMSI);
+    msisdn = moat_object_get_value(object, DEVINFO_KEY_SIM_MSISDN);
+    TDEVINFORepository_AddHardwareSim(&self->fRepository, iccid, imsi, msisdn);
+  } else {
+    LOG_ERROR("Getting devinfo has been failed with [%s].", sse_get_error_string(in_error_code));
+  }
+
+  return;
+
+}
+
+static void
+DEVINFOManager_GetOsCallback(MoatValue* in_os, sse_pointer in_user_data, sse_int in_error_code)
+{
+  TDEVINFOManager *self = (TDEVINFOManager *)in_user_data;
+  MoatObject *object;
+  MoatValue *type;
+  MoatValue *version;
+  sse_int err;
+
+  ASSERT(self);
+
+  if (in_error_code == SSE_E_OK) {
+    err = moat_value_get_object(in_os, &object);
+    if (err != SSE_E_OK) {
+      LOG_ERROR("moat_value_get_object() ... failed with [%s].", sse_get_error_string(err));
+      return;
+    }
+    type = moat_object_get_value(object, DEVINFO_KEY_OS_TYPE);
+    version = moat_object_get_value(object, DEVINFO_KEY_OS_VERSION);
+    TDEVINFORepository_SetSoftwareOS(&self->fRepository, type, version);
+  } else {
+    LOG_ERROR("Getting devinfo has been failed with [%s].", sse_get_error_string(in_error_code));
+  }
+
+  return;
+}
+
+static void
+DEVINFOManager_GetSsclCallback(MoatValue* in_os, sse_pointer in_user_data, sse_int in_error_code)
+{
+  TDEVINFOManager *self = (TDEVINFOManager *)in_user_data;
+  MoatObject *object;
+  MoatValue *type;
+  MoatValue *version;
+  MoatValue *sdk_version;
+  sse_int err;
+
+  ASSERT(self);
+
+  if (in_error_code == SSE_E_OK) {
+    err = moat_value_get_object(in_os, &object);
+    if (err != SSE_E_OK) {
+      LOG_ERROR("moat_value_get_object() ... failed with [%s].", sse_get_error_string(err));
+      return;
+    }
+    type = moat_object_get_value(object, DEVINFO_KEY_SSCL_TYPE);
+    version = moat_object_get_value(object, DEVINFO_KEY_SSCL_VERSION);
+    sdk_version = moat_object_get_value(object, DEVINFO_KEY_SSCL_SDK_VERSION);
+    TDEVINFORepository_SetSoftwareSscl(&self->fRepository, type, version, sdk_version);
+  } else {
+    LOG_ERROR("Getting devinfo has been failed with [%s].", sse_get_error_string(in_error_code));
+  }
+
   return;
 }

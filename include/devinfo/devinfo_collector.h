@@ -48,6 +48,10 @@ struct TDEVINFOCollector_ {
 };
 typedef struct TDEVINFOCollector_ TDEVINFOCollector;
 
+typedef sse_int(*TDEVINFOCollector_GetDevinfoProc)(TDEVINFOCollector* self,
+						   DEVINFOCollector_OnGetCallback in_callback,
+						   sse_pointer in_user_data);
+
 sse_int
 TDEVINFOCollector_Initialize(TDEVINFOCollector* self,
 			     Moat in_moat);

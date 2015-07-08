@@ -52,19 +52,27 @@ struct TDEVINFOMagager_ {
 };
 typedef struct TDEVINFOMagager_ TDEVINFOManager;
 
+struct TDEVINFOManagerGetDevinfoProc_ {
+  TDEVINFOCollector_GetDevinfoProc fGetDevinfoProc;
+  DEVINFOCollector_OnGetCallback fGetDevinfoCallback;
+};
+typedef struct TDEVINFOManagerGetDevinfoProc_ TDEVINFOManagerGetDevinfoProc;
+
 sse_int
 TDEVINFOManager_Initialize(TDEVINFOManager *self,
 			   Moat in_moat);
 
 void
-TDEVINFOMamager_Finalize(TDEVINFOManager *self);
+TDEVINFOManager_Finalize(TDEVINFOManager *self);
+
+DEVINFOManagerState
+TDEVINFOManager_GetState(TDEVINFOManager *self);
+
+const sse_char*
+TDEVINFOMamager_GetStateWithCstr(TDEVINFOManager *self);
 
 sse_int
 TDEVINFOManager_Collect(TDEVINFOManager *self);
-
-sse_int
-TDEVINFOManager_Progress(TDEVINFOManager *self);
-
 
 SSE_END_C_DECLS
 

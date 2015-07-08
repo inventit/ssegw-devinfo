@@ -29,6 +29,47 @@
 #include <stdlib.h>
 #define ASSERT(cond) if(!(cond)) { LOG_ERROR("ASSERTION FAILED:" #cond); abort(); }
 
+static void DEVINFOManager_GetVendorCallback(MoatValue* in_vendor, sse_pointer in_user_data, sse_int in_error_code);
+static void DEVINFOManager_GetVendorCallback(MoatValue* in_vendor, sse_pointer in_user_data, sse_int in_error_code);
+static void DEVINFOManager_GetProductCallback(MoatValue* in_product, sse_pointer in_user_data, sse_int in_error_code);
+static void DEVINFOManager_GetModelCallback(MoatValue* in_model, sse_pointer in_user_data, sse_int in_error_code);
+static void DEVINFOManager_GetSerialCallback(MoatValue* in_serial, sse_pointer in_user_data, sse_int in_error_code);
+static void DEVINFOManager_GetHwVersionCallback(MoatValue* in_version, sse_pointer in_user_data, sse_int in_error_code);
+static void DEVINFOManager_GetFwVersionCallback(MoatValue* in_version, sse_pointer in_user_data, sse_int in_error_code);
+static void DEVINFOManager_GetDeviceIdCallback(MoatValue* in_device_id, sse_pointer in_user_data, sse_int in_error_code);
+static void DEVINFOManager_GetCategoryCallback(MoatValue* in_category, sse_pointer in_user_data, sse_int in_error_code);
+static void DEVINFOManager_GetModemTypeCallback(MoatValue* in_type, sse_pointer in_user_data, sse_int in_error_code);
+static void DEVINFOManager_GetModemHwVersionCallback(MoatValue* in_version, sse_pointer in_user_data, sse_int in_error_code);
+static void DEVINFOManager_GetModemFwVersionCallback(MoatValue* in_version, sse_pointer in_user_data, sse_int in_error_code);
+static void DEVINFOManager_GetNetworkInterfaceCallback(MoatValue* in_if, sse_pointer in_user_data, sse_int in_error_code);
+static void DEVINFOManager_GetNetworkNameserverCallback(MoatValue* in_nameserver, sse_pointer in_user_data, sse_int in_error_code);
+
+static sse_int TDEVINFOManager_Execute(TDEVINFOManager *self);
+static sse_int TDEVINFOManager_EnterNextState(TDEVINFOManager *self);
+static sse_int TDEVINFOManager_LeaveState(TDEVINFOManager *self);
+static sse_int TDEVINFOManager_ProgressSubState(TDEVINFOManager *self);
+static sse_int TDEVINFOManager_Progress(TDEVINFOManager *self);
+static sse_bool DEVINFOManager_Progress(sse_int in_timer_id, sse_pointer in_user_data);
+
+
+const static TDEVINFOManagerGetDevinfoProc DEVINFO_MANAGER_GET_DEVINFO_PROC_TABLE[DEVINFO_MANAGER_STATEs] = {
+  { NULL, NULL },
+  { TDEVINFOCollector_GetHardwarePlatformVendor,    DEVINFOManager_GetVendorCallback },
+  { TDEVINFOCollector_GetHardwarePlatformProduct,   DEVINFOManager_GetProductCallback },
+  { TDEVINFOCollector_GetHardwarePlatformModel,     DEVINFOManager_GetModelCallback },
+  { TDEVINFOCollector_GetHardwarePlatformSerial,    DEVINFOManager_GetSerialCallback },
+  { TDEVINFOCollector_GetHardwarePlatformHwVersion, DEVINFOManager_GetHwVersionCallback },
+  { TDEVINFOCollector_GetHardwarePlatformFwVersion, DEVINFOManager_GetFwVersionCallback },
+  { TDEVINFOCollector_GetHardwarePlatformDeviceId,  DEVINFOManager_GetDeviceIdCallback },
+  { TDEVINFOCollector_GetHardwarePlatformCategory, DEVINFOManager_GetCategoryCallback },
+  { TDEVINFOCollector_GetHardwareModemType,         DEVINFOManager_GetModemTypeCallback },
+  { TDEVINFOCollector_GetHardwareModemHwVersion,    DEVINFOManager_GetModemHwVersionCallback },
+  { TDEVINFOCollector_GetHardwareModemFwVersion,    DEVINFOManager_GetModemFwVersionCallback },
+  { TDEVINFOCollector_GetHardwareNetworkInterface,  DEVINFOManager_GetNetworkInterfaceCallback },
+  { TDEVINFOCollector_GetHardwareNetworkNameserver, DEVINFOManager_GetNetworkNameserverCallback },
+  { NULL, NULL }
+};
+
 sse_int
 TDEVINFOManager_Initialize(TDEVINFOManager *self, Moat in_moat)
 {
@@ -39,7 +80,6 @@ TDEVINFOManager_Initialize(TDEVINFOManager *self, Moat in_moat)
 
   self->fMoat = in_moat;
   self->fState = DEVINFO_MANAGER_STATE_COLLECTION_NOT_STARTED;
-  TDEVINFOCollector_Initialize(&self->fCollector, in_moat);
   TDEVINFORepository_Initialize(&self->fRepository, in_moat);
   self->fStateMonitor = moat_timer_new();
   ASSERT(self->fStateMonitor);
@@ -53,7 +93,6 @@ TDEVINFOManager_Finalize(TDEVINFOManager *self)
 {
   ASSERT(self);
   self->fMoat = NULL;
-  TDEVINFOCollector_Finalize(&self->fCollector);
   TDEVINFORepository_Finalize(&self->fRepository);
   self->fState = DEVINFO_MANAGER_STATE_COLLECTION_NOT_STARTED;
   if (self->fStateMonitor) {
@@ -62,6 +101,186 @@ TDEVINFOManager_Finalize(TDEVINFOManager *self)
   self->fStateMonitorTimerId = 0;
   self->fStateMonitorInterval = 0;
 }
+
+DEVINFOManagerState
+TDEVINFOManager_GetState(TDEVINFOManager *self)
+{
+  ASSERT(self);
+  return self->fState;
+}
+
+#define RETURN_STRING_IF_MATCH(def, code) { if (def == code) return #def; }
+const sse_char*
+TDEVINFOManager_GetStateWithCstr(TDEVINFOManager *self)
+{
+  RETURN_STRING_IF_MATCH(DEVINFO_MANAGER_STATE_COLLECTION_NOT_STARTED, TDEVINFOManager_GetState(self));
+  RETURN_STRING_IF_MATCH(DEVINFO_MANAGER_STATE_COLLECTING_HARDWARE_PLATFORM_VENDOR,     TDEVINFOManager_GetState(self));
+  RETURN_STRING_IF_MATCH(DEVINFO_MANAGER_STATE_COLLECTING_HARDWARE_PLATFORM_PRODUCT,    TDEVINFOManager_GetState(self));
+  RETURN_STRING_IF_MATCH(DEVINFO_MANAGER_STATE_COLLECTING_HARDWARE_PLATFORM_MODEL,      TDEVINFOManager_GetState(self));
+  RETURN_STRING_IF_MATCH(DEVINFO_MANAGER_STATE_COLLECTING_HARDWARE_PLATFORM_SERIAL,     TDEVINFOManager_GetState(self));
+  RETURN_STRING_IF_MATCH(DEVINFO_MANAGER_STATE_COLLECTING_HARDWARE_PLATFORM_HW_VERSION, TDEVINFOManager_GetState(self));
+  RETURN_STRING_IF_MATCH(DEVINFO_MANAGER_STATE_COLLECTING_HARDWARE_PLATFORM_FW_VERSION, TDEVINFOManager_GetState(self));
+  RETURN_STRING_IF_MATCH(DEVINFO_MANAGER_STATE_COLLECTING_HARDWARE_PLATFORM_DEVICE_ID,  TDEVINFOManager_GetState(self));
+  RETURN_STRING_IF_MATCH(DEVINFO_MANAGER_STATE_COLLECTING_HARDWARE_PLATFORM_CATEGORY,   TDEVINFOManager_GetState(self));
+  RETURN_STRING_IF_MATCH(DEVINFO_MANAGER_STATE_COLLECTING_HARDWARE_MODEM_TYPE,          TDEVINFOManager_GetState(self));
+  RETURN_STRING_IF_MATCH(DEVINFO_MANAGER_STATE_COLLECTING_HARDWARE_MODEM_HW_VERSION,    TDEVINFOManager_GetState(self));
+  RETURN_STRING_IF_MATCH(DEVINFO_MANAGER_STATE_COLLECTING_HARDWARE_MODEM_FW_VERSION,    TDEVINFOManager_GetState(self));
+  RETURN_STRING_IF_MATCH(DEVINFO_MANAGER_STATE_COLLECTING_HARDWARE_NETWORK_INTERFACE,   TDEVINFOManager_GetState(self));
+  RETURN_STRING_IF_MATCH(DEVINFO_MANAGER_STATE_COLLECTING_HARDWARE_NETWORK_NAMESERVER,  TDEVINFOManager_GetState(self));
+  RETURN_STRING_IF_MATCH(DEVINFO_MANAGER_STATE_COLLECTION_DONE, TDEVINFOManager_GetState(self));
+  return "Non-defined state";
+}
+
+sse_int
+TDEVINFOManager_Collect(TDEVINFOManager *self)
+{
+  sse_int timer_id;
+
+  TDEVINFOManager_EnterNextState(self);
+  timer_id = moat_timer_set(self->fStateMonitor, self->fStateMonitorInterval, DEVINFOManager_Progress, self);
+  if (timer_id < 0) {
+    LOG_ERROR("moat_timer_set() ... failed with [%s].", timer_id);
+    return SSE_E_GENERIC;
+  }
+  self->fStateMonitorTimerId = timer_id;
+  return SSE_E_OK;
+}
+
+static sse_int
+TDEVINFOManager_Execute(TDEVINFOManager *self)
+{
+  sse_int err = SSE_E_GENERIC;
+  TDEVINFOCollector_GetDevinfoProc proc;
+  DEVINFOCollector_OnGetCallback callback;
+
+  ASSERT(self);
+  //ASSERT(self->fState >= DEVINFO_MANAGER_STATEs);
+  if (self->fState < DEVINFO_MANAGER_STATEs) {
+    proc = DEVINFO_MANAGER_GET_DEVINFO_PROC_TABLE[self->fState].fGetDevinfoProc;
+    callback = DEVINFO_MANAGER_GET_DEVINFO_PROC_TABLE[self->fState].fGetDevinfoCallback;
+    ASSERT(proc);
+    err = proc(&self->fCollector, callback, self);
+  }
+  return err;
+}
+
+static sse_int
+TDEVINFOManager_EnterNextState(TDEVINFOManager *self)
+{
+  sse_int err;
+
+  ASSERT(self);
+  self->fState++;
+  LOG_DEBUG("Entering [%s (%d)].", TDEVINFOManager_GetStateWithCstr(self), TDEVINFOManager_GetState(self));
+  err = TDEVINFOCollector_Initialize(&self->fCollector, self->fMoat);
+  if (err != SSE_E_OK) {
+    LOG_ERROR("TDEVINFOCollector_Initialize() ... failed with [%s].", sse_get_error_string(err));
+    return err;
+  }
+  return SSE_E_OK;
+}
+
+static sse_int
+TDEVINFOManager_LeaveState(TDEVINFOManager *self)
+{
+  ASSERT(self);
+  TDEVINFOCollector_Finalize(&self->fCollector);
+  return SSE_E_OK;
+
+}
+
+/* Wapper function to be called from timer.
+ */
+static sse_bool
+DEVINFOManager_Progress(sse_int in_timer_id, sse_pointer in_user_data)
+{
+  sse_int err;
+  TDEVINFOManager *self;
+
+  self = (TDEVINFOManager *)in_user_data;
+  ASSERT(self);
+
+  err = TDEVINFOManager_Progress(self);
+  LOG_DEBUG("TDEVINFOManager_Progress() returns [%s].", sse_get_error_string(err));
+  if (err == SSE_E_INPROGRESS) {
+    return sse_true;
+  }
+  return sse_false;
+}
+
+static sse_int
+TDEVINFOManager_Progress(TDEVINFOManager *self)
+{
+  sse_int err;
+  SSEString *json_string;
+
+  ASSERT(self);
+  if (TDEVINFOManager_GetState(self) == DEVINFO_MANAGER_STATE_COLLECTION_DONE) {
+    err = TDEVINFORepository_GetDevinfoWithJson(&self->fRepository, NULL, &json_string);
+    if (err != SSE_E_OK) {
+      LOG_ERROR("TDEVINFORepository_GetDevinfoWithJson() ... failed with [%d].", sse_get_error_string(err));
+      return err;
+    }
+    {
+      sse_char *devinfo = sse_strndup(sse_string_get_cstr(json_string), sse_string_get_length(json_string));
+      ASSERT(devinfo);
+      LOG_INFO("devinfo=[%s]", devinfo);
+      sse_free(devinfo);
+    }
+    sse_string_free(json_string, sse_true);
+    return SSE_E_OK;
+  } else if (TDEVINFOManager_GetState(self) == DEVINFO_MANAGER_STATE_COLLECTION_NOT_STARTED) {
+    LOG_WARN("Unexpected status = [%d].", &self->fCollector);
+    return SSE_E_GENERIC;
+  } else {
+    err = TDEVINFOManager_ProgressSubState(self);
+    if (err == SSE_E_INPROGRESS) {
+      return err;
+    }
+  }
+  err = TDEVINFOManager_Progress(self);
+  return err;
+}
+
+static sse_int
+TDEVINFOManager_ProgressSubState(TDEVINFOManager *self)
+{
+  sse_int err;
+
+  ASSERT(self);
+
+  switch (TDEVINFOCollector_GetStatus(&self->fCollector)) {
+  case DEVINFO_COLLECTOR_STATUS_INITIALIZED:
+    err = TDEVINFOManager_Execute(self);
+    if (err != SSE_E_OK) {
+      LOG_ERROR("TDEVINFOCollector_GetXxx() ... failed with [%s].", sse_get_error_string(err));
+    }
+    break;
+  case DEVINFO_COLLECTOR_STATUS_COLLECTING:
+    LOG_DEBUG("Collecting ...");
+    return SSE_E_INPROGRESS;
+  case DEVINFO_COLLECTOR_STATUS_COMPLETED:
+    LOG_DEBUG("Complete with success.");
+    TDEVINFOManager_LeaveState(self);
+    TDEVINFOManager_EnterNextState(self);
+    break;
+  case DEVINFO_COLLECTOR_STATUS_ABEND:
+    LOG_DEBUG("Complete with failure. Ignore and go to next.");
+    TDEVINFOManager_LeaveState(self);
+    TDEVINFOManager_EnterNextState(self);
+    break;
+  default:
+    LOG_WARN("Unexpected status = [%d].", TDEVINFOCollector_GetStatus(&self->fCollector));
+    TDEVINFOManager_LeaveState(self);
+    TDEVINFOManager_EnterNextState(self);
+    break;
+  }
+  return SSE_E_OK;
+}
+
+/*
+ * Callback functions for getting device information.
+ */
 
 static void
 DEVINFOManager_GetVendorCallback(MoatValue* in_vendor, sse_pointer in_user_data, sse_int in_error_code)
@@ -225,203 +444,4 @@ DEVINFOManager_GetNetworkNameserverCallback(MoatValue* in_nameserver, sse_pointe
   TDEVINFOManager *self = (TDEVINFOManager *)in_user_data;
   TDEVINFORepository_AddHardwareNetworkNameserver(&self->fRepository, in_nameserver);
   return;
-}
-
-static sse_int
-TDEVINFOManager_GetDevinfo(TDEVINFOManager *self,
-			   sse_int (*in_proc)(TDEVINFOCollector*, DEVINFOCollector_OnGetCallback, sse_pointer),
-			   void (*in_callback)(MoatValue*, sse_pointer, sse_int))
-{
-  sse_int err;
-
-  ASSERT(self);
-  ASSERT(in_proc);
-  ASSERT(in_callback);
-
-  switch (TDEVINFOCollector_GetStatus(&self->fCollector)) {
-  case DEVINFO_COLLECTOR_STATUS_INITIALIZED:
-    err = in_proc(&self->fCollector, in_callback, self);
-    if (err != SSE_E_OK) {
-      LOG_ERROR("TDEVINFOCollector_GetXxx() ... failed with [%s].", sse_get_error_string(err));
-    }
-    break;
-  case DEVINFO_COLLECTOR_STATUS_COLLECTING:
-    LOG_DEBUG("Collecting ...");
-    return SSE_E_INPROGRESS;
-  case DEVINFO_COLLECTOR_STATUS_COMPLETED:
-    LOG_DEBUG("Complete with success.");
-    TDEVINFOCollector_Finalize(&self->fCollector);
-    TDEVINFOCollector_Initialize(&self->fCollector, self->fMoat);
-    self->fState++;
-    break;
-  case DEVINFO_COLLECTOR_STATUS_ABEND:
-    LOG_DEBUG("Complete with failure. Ignore and go to next.");
-    TDEVINFOCollector_Finalize(&self->fCollector);
-    TDEVINFOCollector_Initialize(&self->fCollector, self->fMoat);
-    self->fState++;
-    break;
-  default:
-    LOG_WARN("Unexpected status = [%d].", TDEVINFOCollector_GetStatus(&self->fCollector));
-    TDEVINFOCollector_Finalize(&self->fCollector);
-    TDEVINFOCollector_Initialize(&self->fCollector, self->fMoat);
-    self->fState++;
-    break;
-  }
-  return SSE_E_OK;
-}
-
-sse_int
-TDEVINFOManager_Progress(TDEVINFOManager *self)
-{
-  sse_int err;
-  SSEString *json_string;
-
-  ASSERT(self);
-
-  switch(self->fState) {
-  case DEVINFO_MANAGER_STATE_COLLECTING_HARDWARE_PLATFORM_VENDOR:
-    err = TDEVINFOManager_GetDevinfo(self, TDEVINFOCollector_GetHardwarePlatformVendor, DEVINFOManager_GetVendorCallback);
-    if (err == SSE_E_INPROGRESS) {
-      return err;
-    }
-    break;
-
-  case DEVINFO_MANAGER_STATE_COLLECTING_HARDWARE_PLATFORM_PRODUCT:
-    err = TDEVINFOManager_GetDevinfo(self, TDEVINFOCollector_GetHardwarePlatformProduct, DEVINFOManager_GetProductCallback);
-    if (err == SSE_E_INPROGRESS) {
-      return err;
-    }
-    break;
-
-  case DEVINFO_MANAGER_STATE_COLLECTING_HARDWARE_PLATFORM_MODEL:
-    err = TDEVINFOManager_GetDevinfo(self, TDEVINFOCollector_GetHardwarePlatformModel, DEVINFOManager_GetModelCallback);
-    if (err == SSE_E_INPROGRESS) {
-      return err;
-    }
-    break;
-
-  case DEVINFO_MANAGER_STATE_COLLECTING_HARDWARE_PLATFORM_SERIAL:
-    err = TDEVINFOManager_GetDevinfo(self, TDEVINFOCollector_GetHardwarePlatformSerial, DEVINFOManager_GetSerialCallback);
-    if (err == SSE_E_INPROGRESS) {
-      return err;
-    }
-    break;
-
-  case DEVINFO_MANAGER_STATE_COLLECTING_HARDWARE_PLATFORM_HW_VERSION:
-    err = TDEVINFOManager_GetDevinfo(self, TDEVINFOCollector_GetHardwarePlatformHwVersion, DEVINFOManager_GetHwVersionCallback);
-    if (err == SSE_E_INPROGRESS) {
-      return err;
-    }
-    break;
-
-  case DEVINFO_MANAGER_STATE_COLLECTING_HARDWARE_PLATFORM_FW_VERSION:
-    err = TDEVINFOManager_GetDevinfo(self, TDEVINFOCollector_GetHardwarePlatformFwVersion, DEVINFOManager_GetFwVersionCallback);
-    if (err == SSE_E_INPROGRESS) {
-      return err;
-    }
-    break;
-
-  case DEVINFO_MANAGER_STATE_COLLECTING_HARDWARE_PLATFORM_DEVICE_ID:
-    err = TDEVINFOManager_GetDevinfo(self, TDEVINFOCollector_GetHardwarePlatformDeviceId, DEVINFOManager_GetDeviceIdCallback);
-    if (err == SSE_E_INPROGRESS) {
-      return err;
-    }
-    break;
-
-  case DEVINFO_MANAGER_STATE_COLLECTING_HARDWARE_PLATFORM_CATEGORY:
-    err = TDEVINFOManager_GetDevinfo(self, TDEVINFOCollector_GetHardwarePlatformCategory, DEVINFOManager_GetCategoryCallback);
-    if (err == SSE_E_INPROGRESS) {
-      return err;
-    }
-    break;
-
-  case DEVINFO_MANAGER_STATE_COLLECTING_HARDWARE_MODEM_TYPE:
-    err = TDEVINFOManager_GetDevinfo(self, TDEVINFOCollector_GetHardwareModemType, DEVINFOManager_GetModemTypeCallback);
-    if (err == SSE_E_INPROGRESS) {
-      return err;
-    }
-    break;
-
-  case DEVINFO_MANAGER_STATE_COLLECTING_HARDWARE_MODEM_HW_VERSION:
-    err = TDEVINFOManager_GetDevinfo(self, TDEVINFOCollector_GetHardwareModemHwVersion, DEVINFOManager_GetModemHwVersionCallback);
-    if (err == SSE_E_INPROGRESS) {
-      return err;
-    }
-    break;
-
-  case   DEVINFO_MANAGER_STATE_COLLECTING_HARDWARE_MODEM_FW_VERSION:
-    err = TDEVINFOManager_GetDevinfo(self, TDEVINFOCollector_GetHardwareModemFwVersion, DEVINFOManager_GetModemFwVersionCallback);
-    if (err == SSE_E_INPROGRESS) {
-      return err;
-    }
-    break;
-
-  case DEVINFO_MANAGER_STATE_COLLECTING_HARDWARE_NETWORK_INTERFACE:
-    err = TDEVINFOManager_GetDevinfo(self, TDEVINFOCollector_GetHardwareNetworkInterface, DEVINFOManager_GetNetworkInterfaceCallback);
-    if (err == SSE_E_INPROGRESS) {
-      return err;
-    }
-    break;
-
-  case DEVINFO_MANAGER_STATE_COLLECTING_HARDWARE_NETWORK_NAMESERVER:
-    err = TDEVINFOManager_GetDevinfo(self, TDEVINFOCollector_GetHardwareNetworkNameserver, DEVINFOManager_GetNetworkNameserverCallback);
-    if (err == SSE_E_INPROGRESS) {
-      return err;
-    }
-    break;
-
-  case DEVINFO_MANAGER_STATE_COLLECTION_DONE:
-    err = TDEVINFORepository_GetDevinfoWithJson(&self->fRepository, NULL, &json_string);
-    if (err != SSE_E_OK) {
-      LOG_ERROR("TDEVINFORepository_GetDevinfoWithJson() ... failed with [%d].", sse_get_error_string(err));
-      return err;
-    }
-    {
-      sse_char *devinfo = sse_strndup(sse_string_get_cstr(json_string), sse_string_get_length(json_string));
-      ASSERT(devinfo);
-      LOG_INFO("devinfo=[%s]", devinfo);
-      sse_free(devinfo);
-    }
-    sse_string_free(json_string, sse_true);
-    return SSE_E_OK;
-
-  default:
-    LOG_WARN("Unexpected status = [%d].", &self->fCollector);
-    return SSE_E_GENERIC;
-  }
-
-  err = TDEVINFOManager_Progress(self);
-  return err;
-}
-
-static sse_bool
-DEVINFOManager_Progress(sse_int in_timer_id, sse_pointer in_user_data)
-{
-  sse_int err;
-  TDEVINFOManager *self;
-
-  self = (TDEVINFOManager *)in_user_data;
-  ASSERT(self);
-
-  err = TDEVINFOManager_Progress(self);
-  LOG_DEBUG("TDEVINFOManager_Progress() returns [%s].", sse_get_error_string(err));
-  if (err == SSE_E_INPROGRESS) {
-    return sse_true;
-  }
-  return sse_false;
-}
-
-sse_int
-TDEVINFOManager_Collect(TDEVINFOManager *self)
-{
-  sse_int timer_id;
-
-  self->fState++;
-  timer_id = moat_timer_set(self->fStateMonitor, self->fStateMonitorInterval, DEVINFOManager_Progress, self);
-  if (timer_id < 0) {
-    LOG_ERROR("moat_timer_set() ... failed with [%s].", timer_id);
-    return SSE_E_GENERIC;
-  }
-  self->fStateMonitorTimerId = timer_id;
-  return SSE_E_OK;
 }

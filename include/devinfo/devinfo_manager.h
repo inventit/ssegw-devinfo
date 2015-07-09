@@ -44,10 +44,14 @@ enum DEVINFOManagerState_ {
 };
 typedef enum DEVINFOManagerState_ DEVINFOManagerState;
 
+typedef void (*DEVINFOManager_CollectCallback)(sse_int in_err, sse_pointer in_user_data);
+
 struct TDEVINFOMagager_ {
   Moat fMoat;
   DEVINFOManagerState fState;
   TDEVINFOCollector fCollector;
+  DEVINFOManager_CollectCallback fCollectCallback;
+  sse_pointer fCollectCallbackUserData;
   TDEVINFORepository fRepository;
   MoatTimer *fStateMonitor;
   sse_int fStateMonitorTimerId;
@@ -72,10 +76,16 @@ DEVINFOManagerState
 TDEVINFOManager_GetState(TDEVINFOManager *self);
 
 const sse_char*
-TDEVINFOMamager_GetStateWithCstr(TDEVINFOManager *self);
+TDEVINFOManager_GetStateWithCstr(TDEVINFOManager *self);
 
 sse_int
-TDEVINFOManager_Collect(TDEVINFOManager *self);
+TDEVINFOManager_Collect(TDEVINFOManager *self,
+			DEVINFOManager_CollectCallback in_callback,
+			sse_pointer in_user_data);
+
+sse_int
+TDEVINFOManager_GetDevinfo(TDEVINFOManager *self,
+			   SSEString **out_devinfo);
 
 SSE_END_C_DECLS
 

@@ -389,12 +389,31 @@ test_devinfo_repository__add_all_items(Moat in_moat)
   return TEST_RESULT_UNKNOWN;
 }
 
-TDEVINFOManager g_manager; //TODO FIX ME
-static sse_int
-test_devinfo_manager(Moat in_moat)
+static void
+test_devinfo_manager_callback(sse_int in_err, sse_pointer in_user_data)
 {
-  TDEVINFOManager_Initialize(&g_manager, in_moat);
-  TDEVINFOManager_Collect(&g_manager);
+  TDEVINFOManager *self;
+  SSEString *devinfo;
+  sse_char *p;
+
+  LOG_PRINT("err = [%s]", sse_get_error_string(in_err));
+
+  self = (TDEVINFOManager*)in_user_data;
+  ASSERT(self);
+
+  ASSERT(TDEVINFOManager_GetDevinfo(self, &devinfo) == SSE_E_OK);
+  ASSERT((p = sse_strndup(sse_string_get_cstr(devinfo), sse_string_get_length(devinfo))));
+  LOG_PRINT("Devinfo = [ %s ]", p);
+}
+
+
+static sse_int
+test_devinfo_manager(Moat in_moat, TDEVINFOManager *in_manager)
+{
+  TDEVINFOManager_Initialize(in_manager, in_moat);
+  TDEVINFOManager_Collect(in_manager,
+			  test_devinfo_manager_callback,
+			  in_manager);
   return TEST_RESULT_UNKNOWN;
 }
 
@@ -409,6 +428,7 @@ moat_app_main(sse_int in_argc, sse_char *argv[])
 {
 	Moat moat = NULL;
 	sse_int err = SSE_E_OK;
+	TDEVINFOManager manager;
 
 	err = moat_init(argv[0], &moat);
 	if (err != SSE_E_OK) {
@@ -420,7 +440,7 @@ moat_app_main(sse_int in_argc, sse_char *argv[])
 	DO_TEST(test_devinfo_repository__overwrite_vendor(moat));
 	DO_TEST(test_devinfo_repository__add_interfaces(moat));
 	DO_TEST(test_devinfo_repository__add_all_items(moat));
-	DO_TEST(test_devinfo_manager(moat));
+	DO_TEST(test_devinfo_manager(moat, &manager));
 
 	err = moat_run(moat);
 	if (err != SSE_E_OK) {

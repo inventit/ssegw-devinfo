@@ -84,6 +84,8 @@ TDEVINFOManager_Initialize(TDEVINFOManager *self, Moat in_moat)
   LOG_DEBUG("self=[%p]", self);
 
   self->fMoat = in_moat;
+  self->fCollectCallback = NULL;
+  self->fCollectCallbackUserData = NULL;
   self->fState = DEVINFO_MANAGER_STATE_COLLECTION_NOT_STARTED;
   TDEVINFORepository_Initialize(&self->fRepository, in_moat);
   self->fStateMonitor = moat_timer_new();
@@ -98,6 +100,8 @@ TDEVINFOManager_Finalize(TDEVINFOManager *self)
 {
   ASSERT(self);
   self->fMoat = NULL;
+  self->fCollectCallback = NULL;
+  self->fCollectCallbackUserData = NULL;
   TDEVINFORepository_Finalize(&self->fRepository);
   self->fState = DEVINFO_MANAGER_STATE_COLLECTION_NOT_STARTED;
   if (self->fStateMonitor) {
@@ -118,7 +122,7 @@ TDEVINFOManager_GetState(TDEVINFOManager *self)
 const sse_char*
 TDEVINFOManager_GetStateWithCstr(TDEVINFOManager *self)
 {
-  RETURN_STRING_IF_MATCH(DEVINFO_MANAGER_STATE_COLLECTION_NOT_STARTED, TDEVINFOManager_GetState(self));
+  RETURN_STRING_IF_MATCH(DEVINFO_MANAGER_STATE_COLLECTION_NOT_STARTED,                  TDEVINFOManager_GetState(self));
   RETURN_STRING_IF_MATCH(DEVINFO_MANAGER_STATE_COLLECTING_HARDWARE_PLATFORM_VENDOR,     TDEVINFOManager_GetState(self));
   RETURN_STRING_IF_MATCH(DEVINFO_MANAGER_STATE_COLLECTING_HARDWARE_PLATFORM_PRODUCT,    TDEVINFOManager_GetState(self));
   RETURN_STRING_IF_MATCH(DEVINFO_MANAGER_STATE_COLLECTING_HARDWARE_PLATFORM_MODEL,      TDEVINFOManager_GetState(self));
@@ -140,9 +144,21 @@ TDEVINFOManager_GetStateWithCstr(TDEVINFOManager *self)
 }
 
 sse_int
-TDEVINFOManager_Collect(TDEVINFOManager *self)
+TDEVINFOManager_Collect(TDEVINFOManager *self,
+			DEVINFOManager_CollectCallback in_callback,
+			sse_pointer in_user_data)
 {
   sse_int timer_id;
+
+  ASSERT(self);
+
+  if (self->fState != DEVINFO_MANAGER_STATE_COLLECTION_NOT_STARTED) {
+    LOG_WARN("Now collecting ... please try later.");
+    return SSE_E_ALREADY;
+  }
+
+  self->fCollectCallback = in_callback;
+  self->fCollectCallbackUserData = in_user_data;
 
   TDEVINFOManager_EnterNextState(self);
   timer_id = moat_timer_set(self->fStateMonitor, self->fStateMonitorInterval, DEVINFOManager_Progress, self);
@@ -151,6 +167,38 @@ TDEVINFOManager_Collect(TDEVINFOManager *self)
     return SSE_E_GENERIC;
   }
   self->fStateMonitorTimerId = timer_id;
+  return SSE_E_OK;
+}
+
+sse_int
+TDEVINFOManager_GetDevinfo(TDEVINFOManager *self,
+			   SSEString **out_devinfo)
+{
+  sse_int err;
+  SSEString *devinfo;
+
+  ASSERT(self);
+  ASSERT(out_devinfo);
+
+  if (self->fState != DEVINFO_MANAGER_STATE_COLLECTION_NOT_STARTED &&
+      self->fState != DEVINFO_MANAGER_STATE_COLLECTION_DONE) {
+    LOG_WARN("Now collecting devinf.");
+    return SSE_E_AGAIN;
+  }
+
+  err = TDEVINFORepository_GetDevinfoWithJson(&self->fRepository, NULL, &devinfo);
+  if (err != SSE_E_OK) {
+    LOG_ERROR("TDEVINFORepository_GetDevinfoWithJson() ... failed with [%s].", sse_get_error_string(err));
+    return err;
+  }
+  { /* for DEBUG print */
+    sse_char *devinfo_cstr = sse_strndup(sse_string_get_cstr(devinfo), sse_string_get_length(devinfo));
+    ASSERT(devinfo);
+    LOG_INFO("devinfo=[%s]", devinfo_cstr);
+    sse_free(devinfo_cstr);
+  }
+  *out_devinfo = devinfo;
+
   return SSE_E_OK;
 }
 
@@ -220,26 +268,21 @@ static sse_int
 TDEVINFOManager_Progress(TDEVINFOManager *self)
 {
   sse_int err;
-  SSEString *json_string;
 
   ASSERT(self);
+
   if (TDEVINFOManager_GetState(self) == DEVINFO_MANAGER_STATE_COLLECTION_DONE) {
-    err = TDEVINFORepository_GetDevinfoWithJson(&self->fRepository, NULL, &json_string);
-    if (err != SSE_E_OK) {
-      LOG_ERROR("TDEVINFORepository_GetDevinfoWithJson() ... failed with [%d].", sse_get_error_string(err));
-      return err;
+    LOG_INFO("Devinfo collection done.");
+    if (self->fCollectCallback) {
+      self->fCollectCallback(SSE_E_OK, self->fCollectCallbackUserData);
     }
-    {
-      sse_char *devinfo = sse_strndup(sse_string_get_cstr(json_string), sse_string_get_length(json_string));
-      ASSERT(devinfo);
-      LOG_INFO("devinfo=[%s]", devinfo);
-      sse_free(devinfo);
-    }
-    sse_string_free(json_string, sse_true);
+    self->fState = DEVINFO_MANAGER_STATE_COLLECTION_NOT_STARTED;
     return SSE_E_OK;
+
   } else if (TDEVINFOManager_GetState(self) == DEVINFO_MANAGER_STATE_COLLECTION_NOT_STARTED) {
     LOG_WARN("Unexpected status = [%d].", &self->fCollector);
     return SSE_E_GENERIC;
+
   } else {
     err = TDEVINFOManager_ProgressSubState(self);
     if (err == SSE_E_INPROGRESS) {

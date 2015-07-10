@@ -74,7 +74,10 @@ xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 ### ビルド
 
 ```
+$ git clone https://${USER}@bitbucket.org/inventit/ssegw-devinfo.git
 $ cd ${APP_ROOT}
+$ git submodule init
+$ git submodule update
 $ ./configure
 $ make
 ```

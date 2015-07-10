@@ -159,6 +159,7 @@ TDEVINFOManager_Collect(TDEVINFOManager *self,
 
   self->fCollectCallback = in_callback;
   self->fCollectCallbackUserData = in_user_data;
+  TDEVINFORepository_Reset(&self->fRepository);
 
   TDEVINFOManager_EnterNextState(self);
   timer_id = moat_timer_set(self->fStateMonitor, self->fStateMonitorInterval, DEVINFOManager_Progress, self);

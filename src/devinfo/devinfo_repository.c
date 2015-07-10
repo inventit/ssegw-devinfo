@@ -52,6 +52,17 @@ TDEVINFORepository_Finalize(TDEVINFORepository* self)
   }
 }
 
+void
+TDEVINFORepository_Reset(TDEVINFORepository* self)
+{
+  ASSERT(self);
+  if (self->fDevinfo) {
+    moat_object_free(self->fDevinfo);
+  }
+  self->fDevinfo = moat_object_new();
+  ASSERT(self->fDevinfo);
+}
+
 /*@TODO Over write only existing keys*/
 sse_int
 TDEVINFORepository_LoadDevinfo(TDEVINFORepository* self, SSEString *in_path)

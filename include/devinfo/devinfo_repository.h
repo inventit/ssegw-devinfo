@@ -34,6 +34,9 @@ TDEVINFORepository_Initialize(TDEVINFORepository* self,
 void
 TDEVINFORepository_Finalize(TDEVINFORepository* self);
 
+void
+TDEVINFORepository_Reset(TDEVINFORepository* self);
+
 sse_int
 TDEVINFORepository_LoadDevinfo(TDEVINFORepository* self,
 			       SSEString *in_path);

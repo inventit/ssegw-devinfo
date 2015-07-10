@@ -567,10 +567,11 @@ TDEVINFOCollector_GetHardwareSim(TDEVINFOCollector* self,
   self->fUserData = in_user_data;
   self->fStatus = DEVINFO_COLLECTOR_STATUS_COLLECTING;
 
-#if 0
+#if 1
   if(self->fOnGetCallback) {
     self->fOnGetCallback(NULL, self->fUserData, SSE_E_NOENT);
   }
+  self->fStatus = DEVINFO_COLLECTOR_STATUS_COMPLETED;
   return SSE_E_OK;
 #else
   /*

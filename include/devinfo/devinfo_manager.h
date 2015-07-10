@@ -46,22 +46,36 @@ typedef enum DEVINFOManagerState_ DEVINFOManagerState;
 
 typedef void (*DEVINFOManager_CollectCallback)(sse_int in_err, sse_pointer in_user_data);
 
-struct TDEVINFOMagager_ {
-  Moat fMoat;
-  DEVINFOManagerState fState;
-  TDEVINFOCollector fCollector;
-  DEVINFOManager_CollectCallback fCollectCallback;
-  sse_pointer fCollectCallbackUserData;
-  TDEVINFORepository fRepository;
-  MoatTimer *fStateMonitor;
-  sse_int fStateMonitorTimerId;
-  sse_int fStateMonitorInterval;
-};
-typedef struct TDEVINFOMagager_ TDEVINFOManager;
+/**
+ * @struct TDEVINFOManager_
+ * @brief This manager class collects device info and store it to the repository.
+ */
+struct TDEVINFOManager_ {
+  Moat fMoat;                                       /** Moat instance */
+  DEVINFOManagerState fState;                       /** Collecting state */
 
+  /* Device info collector */
+  TDEVINFOCollector fCollector;                     /** Collector instance */
+  DEVINFOManager_CollectCallback fCollectCallback;  /** Callback function on collection completion */
+  sse_pointer fCollectCallbackUserData;             /** User data passed by callback */
+
+  /* Device info repository */
+  TDEVINFORepository fRepository;                   /** Device info repository */
+
+  /* Timer for monitoring a collecting state */
+  MoatTimer *fStateMonitor;                         /** Timer instance to monitor collecting state */
+  sse_int fStateMonitorTimerId;                     /** Timer ID */
+  sse_int fStateMonitorInterval;                    /** State monitoring interval */
+};
+typedef struct TDEVINFOManager_ TDEVINFOManager;
+
+/**
+ * @struct TDEVINFOManagerGetDevinfoProc_
+ * @brief  function and callback to collect device info.
+ */
 struct TDEVINFOManagerGetDevinfoProc_ {
-  TDEVINFOCollector_GetDevinfoProc fGetDevinfoProc;
-  DEVINFOCollector_OnGetCallback fGetDevinfoCallback;
+  TDEVINFOCollector_GetDevinfoProc fGetDevinfoProc;    /** function */
+  DEVINFOCollector_OnGetCallback fGetDevinfoCallback;  /** callback */
 };
 typedef struct TDEVINFOManagerGetDevinfoProc_ TDEVINFOManagerGetDevinfoProc;
 

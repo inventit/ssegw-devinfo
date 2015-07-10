@@ -16,6 +16,7 @@
         'src/devinfo/devinfo_repository.c',
         'src/devinfo/devinfo_collector.c',
         'src/devinfo/devinfo_manager.c',
+        'src/devinfo/devinfo_model_command.c',
         'src/<(package_name).c',
        ],
       'product_prefix': '',

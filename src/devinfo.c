@@ -50,6 +50,8 @@ DeviceInfo_CollectOnComplete(sse_int in_err,
   MoatObject *object = NULL;
   sse_char *job_service_id;
   sse_int request_id;
+  sse_size encoded_len;
+  sse_char *encoded;
 
   context = (TDEVINFOModelCommand *)in_user_data;
   ASSERT(context);
@@ -76,12 +78,15 @@ DeviceInfo_CollectOnComplete(sse_int in_err,
     goto error_exit;
   }
 
+  /* Base64 encode */
+  encoded_len = sse_base64_get_encoded_length(sse_string_get_length(devinfo));
+  encoded = sse_zeroalloc(encoded_len);
+  ASSERT(encoded);
+  sse_base64_encode((sse_byte*)sse_string_get_cstr(devinfo), sse_string_get_length(devinfo), encoded);
+  LOG_INFO("Encoded=[%s]", encoded);
+
   /* Create a model object */
-  err = moat_object_add_string_value(object,
-				     "deviceInfo",
-				     sse_string_get_cstr(devinfo),
-				     sse_string_get_length(devinfo),
-				     sse_true, sse_false);
+  err = moat_object_add_string_value(object, "deviceInfo", encoded, encoded_len, sse_true, sse_false);
   if (err != SSE_E_OK) {
     LOG_ERROR("moat_object_add_string_value() ... failed with [%s].", err);
     goto error_exit;
@@ -98,6 +103,7 @@ DeviceInfo_CollectOnComplete(sse_int in_err,
   if (request_id < 0) {
     LOG_ERROR("moat_send_notification() ... failed with [%s].", request_id);
   }
+  LOG_INFO("moat_send_notification(job_service_id=[%s], key=[%s]) ... in progress.", job_service_id, context->fKey);
   sse_string_free(devinfo, sse_true);
   moat_object_free(object);
   return;

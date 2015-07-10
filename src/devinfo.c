@@ -83,7 +83,14 @@ DeviceInfo_CollectOnComplete(sse_int in_err,
   encoded = sse_zeroalloc(encoded_len);
   ASSERT(encoded);
   sse_base64_encode((sse_byte*)sse_string_get_cstr(devinfo), sse_string_get_length(devinfo), encoded);
-  LOG_INFO("Encoded=[%s]", encoded);
+  { /* for DEBUG */
+    sse_char *buff;
+    buff = sse_strndup(encoded, encoded_len);
+    if (buff) {
+      LOG_INFO("Encoded=[%s]", buff);
+      sse_free(buff);
+    }
+  }
 
   /* Create a model object */
   err = moat_object_add_string_value(object, "deviceInfo", encoded, encoded_len, sse_true, sse_false);

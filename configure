@@ -51,6 +51,11 @@ parser.add_option("--unittest",
                   default=False,
                   help="Enable to perform unit test.")
 
+parser.add_option("--product",
+    action="store",
+    dest="target_product",
+    help="M2M Gateway product to build for. Valid values are: generic, Armadillo-IoT.")
+
 (options, args) = parser.parse_args()
 
 def cc_macros():
@@ -248,6 +253,7 @@ def configure_app(o):
   o[ 'ldflags' ] = [ '-L' + moat_lib_dir ]
 
   o['variables']['test_config'] = 'unit' if options.unittest else 'none'
+  o['variables']['target_product'] = options.target_product if options.target_product in ['generic', 'Armadillo-IoT' ] else 'generic'
 
 output = {
   'variables': {},

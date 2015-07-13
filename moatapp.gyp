@@ -39,7 +39,12 @@
             'src/<(package_name)_unittest.c',
           ],
         }],
-      ]
+        ['target_product == "Armadillo-IoT"', {
+          'sources': [
+            'src/devinfo/product/armadillo_iot/devinfo_collector.c',
+          ],
+        }],
+      ],
     },
   ],
 }

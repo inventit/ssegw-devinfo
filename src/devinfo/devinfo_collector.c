@@ -131,7 +131,7 @@ TDEVINFOCollector_ReturnNoEntry(TDEVINFOCollector* self,
   return SSE_E_OK;
 }
 
-sse_int
+sse_int __attribute__((weak))
 TDEVINFOCollector_GetHardwarePlatformVendor(TDEVINFOCollector* self,
 					    DEVINFOCollector_OnGetCallback in_callback,
 					    sse_pointer in_user_data)
@@ -140,7 +140,7 @@ TDEVINFOCollector_GetHardwarePlatformVendor(TDEVINFOCollector* self,
   return TDEVINFOCollector_ReturnNoEntry(self, in_callback, in_user_data);
 }
 
-sse_int
+sse_int __attribute__((weak))
 TDEVINFOCollector_GetHardwarePlatformProduct(TDEVINFOCollector* self,
 					     DEVINFOCollector_OnGetCallback in_callback,
 					     sse_pointer in_user_data)
@@ -149,7 +149,7 @@ TDEVINFOCollector_GetHardwarePlatformProduct(TDEVINFOCollector* self,
   return TDEVINFOCollector_ReturnNoEntry(self, in_callback, in_user_data);
 }
 
-sse_int
+sse_int __attribute__((weak))
 TDEVINFOCollector_GetHardwarePlatformModel(TDEVINFOCollector* self,
 					   DEVINFOCollector_OnGetCallback in_callback,
 					   sse_pointer in_user_data)
@@ -158,7 +158,7 @@ TDEVINFOCollector_GetHardwarePlatformModel(TDEVINFOCollector* self,
   return TDEVINFOCollector_ReturnNoEntry(self, in_callback, in_user_data);
 }
 
-sse_int
+sse_int __attribute__((weak))
 TDEVINFOCollector_GetHardwarePlatformSerial(TDEVINFOCollector* self,
 					    DEVINFOCollector_OnGetCallback in_callback,
 					    sse_pointer in_user_data)
@@ -197,7 +197,7 @@ TDEVINFOCollector_GetHardwarePlatformSerial(TDEVINFOCollector* self,
   return SSE_E_OK;
 }
 
-sse_int
+sse_int __attribute__((weak))
 TDEVINFOCollector_GetHardwarePlatformHwVersion(TDEVINFOCollector* self,
 					       DEVINFOCollector_OnGetCallback in_callback,
 					       sse_pointer in_user_data)
@@ -206,7 +206,7 @@ TDEVINFOCollector_GetHardwarePlatformHwVersion(TDEVINFOCollector* self,
   return TDEVINFOCollector_ReturnNoEntry(self, in_callback, in_user_data);
 }
 
-sse_int
+sse_int __attribute__((weak))
 TDEVINFOCollector_GetHardwarePlatformFwVersion(TDEVINFOCollector* self,
 					       DEVINFOCollector_OnGetCallback in_callback,
 					       sse_pointer in_user_data)
@@ -215,7 +215,7 @@ TDEVINFOCollector_GetHardwarePlatformFwVersion(TDEVINFOCollector* self,
   return TDEVINFOCollector_ReturnNoEntry(self, in_callback, in_user_data);
 }
 
-sse_int
+sse_int __attribute__((weak))
 TDEVINFOCollector_GetHardwarePlatformDeviceId(TDEVINFOCollector* self,
 					      DEVINFOCollector_OnGetCallback in_callback,
 					      sse_pointer in_user_data)
@@ -260,7 +260,7 @@ TDEVINFOCollector_GetHardwarePlatformDeviceId(TDEVINFOCollector* self,
   return SSE_E_OK;
 }
 
-sse_int
+sse_int __attribute__((weak))
 TDEVINFOCollector_GetHardwarePlatformCategory(TDEVINFOCollector* self,
 					      DEVINFOCollector_OnGetCallback in_callback,
 					      sse_pointer in_user_data)
@@ -268,7 +268,7 @@ TDEVINFOCollector_GetHardwarePlatformCategory(TDEVINFOCollector* self,
   return TDEVINFOCollector_ReturnDefaultValue(self, in_callback, in_user_data, "Gateway");
 }
 
-sse_int
+sse_int __attribute__((weak))
 TDEVINFOCollector_GetHardwareModemType(TDEVINFOCollector* self,
 				       DEVINFOCollector_OnGetCallback in_callback,
 				       sse_pointer in_user_data)
@@ -278,7 +278,7 @@ TDEVINFOCollector_GetHardwareModemType(TDEVINFOCollector* self,
 }
 
 
-sse_int
+sse_int __attribute__((weak))
 TDEVINFOCollector_GetHardwareModemHwVersion(TDEVINFOCollector* self,
 					    DEVINFOCollector_OnGetCallback in_callback,
 					    sse_pointer in_user_data)
@@ -288,7 +288,7 @@ TDEVINFOCollector_GetHardwareModemHwVersion(TDEVINFOCollector* self,
 }
 
 
-sse_int
+sse_int __attribute__((weak))
 TDEVINFOCollector_GetHardwareModemFwVersion(TDEVINFOCollector* self,
 					    DEVINFOCollector_OnGetCallback in_callback,
 					    sse_pointer in_user_data)
@@ -387,7 +387,7 @@ DEVINFOCollector_GetNetworkConfiguration(SSEString* in_ifname)
   return NULL;
 }
 
-sse_int
+sse_int __attribute__((weak))
 TDEVINFOCollector_GetHardwareNetworkInterface(TDEVINFOCollector* self,
 					      DEVINFOCollector_OnGetCallback in_callback,
 					      sse_pointer in_user_data)
@@ -514,7 +514,7 @@ TDEVINFOCollector_GetHardwareNetworkNameserverOnErrorCallback(TSseUtilShellComma
   collector->fStatus = DEVINFO_COLLECTOR_STATUS_ABEND;
 }
 
-sse_int
+sse_int __attribute__((weak))
 TDEVINFOCollector_GetHardwareNetworkNameserver(TDEVINFOCollector* self,
 					       DEVINFOCollector_OnGetCallback in_callback,
 					       sse_pointer in_user_data)
@@ -555,7 +555,7 @@ TDEVINFOCollector_GetHardwareNetworkNameserver(TDEVINFOCollector* self,
   return SSE_E_OK;
 }
 
-sse_int
+sse_int __attribute__((weak))
 TDEVINFOCollector_GetHardwareSim(TDEVINFOCollector* self,
 				 DEVINFOCollector_OnGetCallback in_callback,
 				 sse_pointer in_user_data)
@@ -702,7 +702,7 @@ DEVINFOCollector_GetSoftwareOSVersion(MoatValue **out_os_version)
   return SSE_E_OK;
 }
 
-sse_int
+sse_int __attribute__((weak))
 TDEVINFOCollector_GetSoftwareOS(TDEVINFOCollector* self,
 				DEVINFOCollector_OnGetCallback in_callback,
 				sse_pointer in_user_data)
@@ -789,7 +789,7 @@ TDEVINFOCollector_GetSoftwareOS(TDEVINFOCollector* self,
   return err;
 }
 
-sse_int
+sse_int __attribute__((weak))
 TDEVINFOCollector_GetSoftwareSscl(TDEVINFOCollector* self,
 				  DEVINFOCollector_OnGetCallback in_callback,
 				  sse_pointer in_user_data)

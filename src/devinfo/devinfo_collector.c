@@ -20,7 +20,6 @@
 #include <string.h>
 #include <errno.h>
 #include <servicesync/moat.h>
-#include <servicesync/sse/sseversion.h> // Workaround
 #include <sseutils.h>
 #include <devinfo/devinfo.h>
 

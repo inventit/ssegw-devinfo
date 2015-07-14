@@ -261,6 +261,7 @@ static sse_bool
 DEVINFOManager_Progress(sse_int in_timer_id, sse_pointer in_user_data)
 {
   sse_int err;
+  sse_int timer_id;
   TDEVINFOManager *self;
 
   self = (TDEVINFOManager *)in_user_data;
@@ -269,8 +270,16 @@ DEVINFOManager_Progress(sse_int in_timer_id, sse_pointer in_user_data)
   err = TDEVINFOManager_Progress(self);
   LOG_DEBUG("TDEVINFOManager_Progress() returns [%s].", sse_get_error_string(err));
   if (err == SSE_E_INPROGRESS) {
-    return sse_true;
+    self->fStateMonitorInterval = self->fStateMonitorInterval ? self->fStateMonitorInterval * 2 : 1;
+    timer_id = moat_timer_set(self->fStateMonitor, self->fStateMonitorInterval, DEVINFOManager_Progress, self);
+    if (timer_id < 0) {
+      LOG_ERROR("moat_timer_set() ... failed with [%s].", timer_id);
+      return sse_true;
+    }
+    self->fStateMonitorTimerId = timer_id;
+    return sse_false;
   }
+  self->fStateMonitorInterval = 0; /* Reset timer interval. */
   return sse_false;
 }
 

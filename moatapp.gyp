@@ -41,7 +41,7 @@
         }],
         ['target_product == "Armadillo-IoT"', {
           'sources': [
-            'src/devinfo/product/armadillo_iot/devinfo_collector.c',
+            'src/devinfo/ports/armadillo_iot/devinfo_collector.c',
           ],
         }],
       ],

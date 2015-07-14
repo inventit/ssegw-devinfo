@@ -52,7 +52,7 @@ test_devinfo_repository__load_devinfo_from_file(Moat in_moat)
   sse_char* expected = "{\"hardware\":{\"platform\":{\"vendor\":\"Inventit\",\"product\":\"IVI IoT Gateway\",\"model\":\"IVI-0001\",\"serial\":\"123456\",\"hwVersion\":\"1.0.0\",\"fwVersion\":\"2.0.1\",\"deviceId\":\"IVI:SN:123456\",\"category\":\"gateway\"},\"modem\":{\"type\":\"XXX\",\"hwVersion\":\"rev1.2.0\",\"fwVersion\":\"v2.0.0\"},\"network\":{\"interface\":[{\"name\":\"eth0\",\"hwAddress\":\"00:11:22:33:44:55\",\"ipv4Address\":\"192.168.1.25\",\"netmask\":\"255.255.255.0\",\"ipv6Address\":\"fe80::a00:27ff:feaa:38a9/64\"},{\"name\":\"usb0\",\"hwAddress\":\"EE:07:72:2F:01:07\",\"ipv4Address\":\"153.158.37.30\",\"netmask\":\"255.255.255.255\",\"ipv6Address\":\"fe80::ec07:72ff:fe2f:107/64\"}],\"nameserver\":[\"222.146.35.1\",\"221.184.25.1\"]},\"sim\":[{\"iccid\":\"898110011111111111111\",\"imsi\":\"121234561234560\",\"msisdn\":\"09012345678\"}]},\"software\":{\"os\":{\"type\":\"Linux\",\"version\":\"2.6.26\"},\"sscl\":{\"type\":\"SSEGW\",\"version\":\"1.0.6\",\"sdkVersion\":\"1.0.5\"}}}";
 
   // Initialize
-  ASSERT(TDEVINFORepository_Initialize(&repo, in_moat) == SSE_E_OK);
+  ASSERT(TDEVINFORepository_Initialize(&repo, in_moat, NULL) == SSE_E_OK);
 
   // Load devinfo from the file.
   ASSERT((path = sse_string_new("./devinfo.json")) != NULL);
@@ -84,7 +84,7 @@ test_devinfo_repository__add_vendor(Moat in_moat)
   sse_char expected[] = "{\"hardware\":{\"platform\":{\"vendor\":\"ABC Corp.\"}}}";
 
   // Initialize
-  ASSERT(TDEVINFORepository_Initialize(&repo, in_moat) == SSE_E_OK);
+  ASSERT(TDEVINFORepository_Initialize(&repo, in_moat, NULL) == SSE_E_OK);
 
   // Add hardware.platform.vendor into empty repository.
   ASSERT((vendor = moat_value_new_string("ABC Corp.", 0, sse_true)) != NULL);
@@ -114,7 +114,7 @@ test_devinfo_repository__overwrite_vendor(Moat in_moat)
   sse_char expected[] = "ABC Corp.";
 
   // Initialize
-  ASSERT(TDEVINFORepository_Initialize(&repo, in_moat) == SSE_E_OK);
+  ASSERT(TDEVINFORepository_Initialize(&repo, in_moat, NULL) == SSE_E_OK);
 
   ASSERT((path = sse_string_new("./devinfo.json")) != NULL);
   ASSERT(TDEVINFORepository_LoadDevinfo(&repo, path) == SSE_E_OK);
@@ -158,7 +158,7 @@ test_devinfo_repository__add_interfaces(Moat in_moat)
   MoatValue* usb0_ipv6addr;
 
   // Initialize
-  ASSERT(TDEVINFORepository_Initialize(&repo, in_moat) == SSE_E_OK);
+  ASSERT(TDEVINFORepository_Initialize(&repo, in_moat, NULL) == SSE_E_OK);
 
   // Register intaface info
   ASSERT((eth0_name     = moat_value_new_string("eth0", 0, sse_true)));
@@ -213,7 +213,7 @@ test_devinfo_repository__add_all_items(Moat in_moat)
   sse_char* json_cstr;
 
   // Initialize
-  ASSERT(TDEVINFORepository_Initialize(&repo, in_moat) == SSE_E_OK);
+  ASSERT(TDEVINFORepository_Initialize(&repo, in_moat, NULL) == SSE_E_OK);
 
   // Add all items
   { // Hardware

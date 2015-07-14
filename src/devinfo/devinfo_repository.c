@@ -29,14 +29,28 @@
 #define ASSERT(cond) if(!(cond)) { LOG_ERROR("ASSERTION FAILED:" #cond); abort(); }
 
 sse_int
-TDEVINFORepository_Initialize(TDEVINFORepository* self, Moat in_moat)
+TDEVINFORepository_Initialize(TDEVINFORepository* self,
+			      Moat in_moat,
+			      SSEString *in_path)
 {
+  sse_int err;
+
   ASSERT(self);
   ASSERT(in_moat);
 
   self->fMoat = in_moat;
   self->fDevinfo = moat_object_new();
   ASSERT(self->fDevinfo);
+
+  /* Load preset parameter from configuration file. */
+  if (in_path) {
+    err = TDEVINFORepository_LoadDevinfo(self, in_path);
+    if (err != SSE_E_OK) {
+      LOG_ERROR("TDEVINFORepository_LoadDevinfo() ... failed with [%s].", sse_get_error_string(err));
+      /* Return SSE_E_OK explicitly.
+       */
+    }
+  }
 
   return SSE_E_OK;
 }
@@ -53,14 +67,24 @@ TDEVINFORepository_Finalize(TDEVINFORepository* self)
 }
 
 void
-TDEVINFORepository_Reset(TDEVINFORepository* self)
+TDEVINFORepository_Reset(TDEVINFORepository* self,
+			 SSEString *in_path)
 {
+  sse_int err;
   ASSERT(self);
   if (self->fDevinfo) {
     moat_object_free(self->fDevinfo);
   }
   self->fDevinfo = moat_object_new();
   ASSERT(self->fDevinfo);
+
+  /* Load preset parameter from configuration file. */
+  if (in_path) {
+    err = TDEVINFORepository_LoadDevinfo(self, in_path);
+    if (err != SSE_E_OK) {
+      LOG_ERROR("TDEVINFORepository_LoadDevinfo() ... failed with [%s].", sse_get_error_string(err));
+    }
+  }
 }
 
 /*@TODO Over write only existing keys*/

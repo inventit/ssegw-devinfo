@@ -29,13 +29,15 @@ typedef struct TDEVINFORepository_ TDEVINFORepository;
 
 sse_int
 TDEVINFORepository_Initialize(TDEVINFORepository* self,
-			      Moat in_moat);
+			      Moat in_moat,
+			      SSEString *in_path);
 
 void
 TDEVINFORepository_Finalize(TDEVINFORepository* self);
 
 void
-TDEVINFORepository_Reset(TDEVINFORepository* self);
+TDEVINFORepository_Reset(TDEVINFORepository* self,
+			 SSEString *in_path);
 
 sse_int
 TDEVINFORepository_LoadDevinfo(TDEVINFORepository* self,

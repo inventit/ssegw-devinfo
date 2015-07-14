@@ -78,6 +78,8 @@ const static TDEVINFOManagerGetDevinfoProc DEVINFO_MANAGER_GET_DEVINFO_PROC_TABL
 sse_int
 TDEVINFOManager_Initialize(TDEVINFOManager *self, Moat in_moat)
 {
+  SSEString *conf_path;
+
   ASSERT(self);
   ASSERT(in_moat);
 
@@ -87,7 +89,10 @@ TDEVINFOManager_Initialize(TDEVINFOManager *self, Moat in_moat)
   self->fCollectCallback = NULL;
   self->fCollectCallbackUserData = NULL;
   self->fState = DEVINFO_MANAGER_STATE_COLLECTION_NOT_STARTED;
-  TDEVINFORepository_Initialize(&self->fRepository, in_moat);
+  conf_path = sse_string_new("devinfo.conf");
+  ASSERT(conf_path);
+  TDEVINFORepository_Initialize(&self->fRepository, in_moat, conf_path);
+  sse_string_free(conf_path, sse_true);
   self->fStateMonitor = moat_timer_new();
   ASSERT(self->fStateMonitor);
   self->fStateMonitorTimerId = 0;
@@ -149,6 +154,7 @@ TDEVINFOManager_Collect(TDEVINFOManager *self,
 			sse_pointer in_user_data)
 {
   sse_int timer_id;
+  SSEString *conf_path;
 
   ASSERT(self);
 
@@ -159,7 +165,10 @@ TDEVINFOManager_Collect(TDEVINFOManager *self,
 
   self->fCollectCallback = in_callback;
   self->fCollectCallbackUserData = in_user_data;
-  TDEVINFORepository_Reset(&self->fRepository);
+  conf_path = sse_string_new("devinfo.conf");
+  ASSERT(conf_path);
+  TDEVINFORepository_Reset(&self->fRepository, conf_path);
+  sse_string_free(conf_path, sse_true);
 
   TDEVINFOManager_EnterNextState(self);
   timer_id = moat_timer_set(self->fStateMonitor, self->fStateMonitorInterval, DEVINFOManager_Progress, self);
@@ -339,12 +348,23 @@ DEVINFOManager_GetVendorCallback(MoatValue* in_vendor, sse_pointer in_user_data,
 {
   MoatValue *value = NULL;
   TDEVINFOManager *self = (TDEVINFOManager *)in_user_data;
+  SSEString *key = NULL;
+  sse_int err;
+
   ASSERT(self);
 
   if (in_error_code == SSE_E_OK) {
     value = in_vendor;
   } else if (in_error_code == SSE_E_NOENT) {
-    value = moat_value_new_string("NO DATA", 0, sse_true);
+    /* If no vendor info has been found and any preset value was not set, set "NO DATA".
+     */
+    key = sse_string_new(DEVINFO_KEY_VENDOR);
+    ASSERT(key);
+    err = TDEVINFORepository_GetDevinfo(&self->fRepository, key, &value);
+    if (err != SSE_E_OK) {
+      value = moat_value_new_string("NO DATA", 0, sse_true);
+    }
+    sse_string_free(key, sse_true);
   } else {
     LOG_ERROR("Getting devinfo has been failed with [%s].", sse_get_error_string(in_error_code));
   }
@@ -363,12 +383,23 @@ DEVINFOManager_GetProductCallback(MoatValue* in_product, sse_pointer in_user_dat
 {
   MoatValue *value = NULL;
   TDEVINFOManager *self = (TDEVINFOManager *)in_user_data;
+  SSEString *key = NULL;
+  sse_int err;
+
   ASSERT(self);
 
   if (in_error_code == SSE_E_OK) {
     value = in_product;
   } else if (in_error_code == SSE_E_NOENT) {
-    value = moat_value_new_string("NO DATA", 0, sse_true);
+    /* If no product info has been found and any preset value was not set, set "NO DATA".
+     */
+    key = sse_string_new(DEVINFO_KEY_PRODUCT);
+    ASSERT(key);
+    err = TDEVINFORepository_GetDevinfo(&self->fRepository, key, &value);
+    if (err != SSE_E_OK) {
+      value = moat_value_new_string("NO DATA", 0, sse_true);
+    }
+    sse_string_free(key, sse_true);
   } else {
     LOG_ERROR("Getting devinfo has been failed with [%s].", sse_get_error_string(in_error_code));
   }
@@ -389,12 +420,23 @@ DEVINFOManager_GetModelCallback(MoatValue* in_model, sse_pointer in_user_data, s
 {
   MoatValue *value = NULL;
   TDEVINFOManager *self = (TDEVINFOManager *)in_user_data;
+  SSEString *key = NULL;
+  sse_int err;
+
   ASSERT(self);
 
   if (in_error_code == SSE_E_OK) {
     value = in_model;
   } else if (in_error_code == SSE_E_NOENT) {
-    value = moat_value_new_string("NO DATA", 0, sse_true);
+    /* If no model info has been found and any preset value was not set, set "NO DATA".
+     */
+    key = sse_string_new(DEVINFO_KEY_MODEL);
+    ASSERT(key);
+    err = TDEVINFORepository_GetDevinfo(&self->fRepository, key, &value);
+    if (err != SSE_E_OK) {
+      value = moat_value_new_string("NO DATA", 0, sse_true);
+    }
+    sse_string_free(key, sse_true);
   } else {
     LOG_ERROR("Getting devinfo has been failed with [%s].", sse_get_error_string(in_error_code));
   }
@@ -415,12 +457,23 @@ DEVINFOManager_GetSerialCallback(MoatValue* in_serial, sse_pointer in_user_data,
 {
   MoatValue *value = NULL;
   TDEVINFOManager *self = (TDEVINFOManager *)in_user_data;
+  SSEString *key = NULL;
+  sse_int err;
+
   ASSERT(self);
 
   if (in_error_code == SSE_E_OK) {
     value = in_serial;
   } else if (in_error_code == SSE_E_NOENT) {
-    value = moat_value_new_string("NO DATA", 0, sse_true);
+    /* If no serial info has been found and any preset value was not set, set "NO DATA".
+     */
+    key = sse_string_new(DEVINFO_KEY_SERIAL);
+    ASSERT(key);
+    err = TDEVINFORepository_GetDevinfo(&self->fRepository, key, &value);
+    if (err != SSE_E_OK) {
+      value = moat_value_new_string("NO DATA", 0, sse_true);
+    }
+    sse_string_free(key, sse_true);
   } else {
     LOG_ERROR("Getting devinfo has been failed with [%s].", sse_get_error_string(in_error_code));
   }

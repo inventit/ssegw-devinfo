@@ -16,6 +16,9 @@
  * http://www.yourinventit.com/
  */
 
+#include <stdio.h>
+#include <string.h>
+#include <errno.h>
 #include <servicesync/moat.h>
 #include <sseutils.h>
 #include <devinfo/devinfo.h>
@@ -35,6 +38,78 @@
     buff[len] = '\0';							\
     LOG_DEBUG(#label " = [%s]", buff);					\
   }
+
+sse_int
+TDEVINFOCollector_GetHardwarePlatformFwVersion(TDEVINFOCollector* self,
+					       DEVINFOCollector_OnGetCallback in_callback,
+					       sse_pointer in_user_data)
+{
+  FILE *fd;
+  sse_char buff[256];
+  sse_char *p;
+  sse_uint length;
+  MoatValue *value = NULL;
+
+  LOG_DEBUG("Set callback = [%p] and user data= [%p]", in_callback, in_user_data);
+
+  ASSERT(self);
+
+  self->fOnGetCallback = in_callback;
+  self->fUserData = in_user_data;
+  self->fStatus = DEVINFO_COLLECTOR_STATUS_COLLECTING;
+
+  /*
+   * Get firmware version (e.g. SS-Trial_1.1.0)
+   */
+
+  /* Get OS version by reading /proc/sys/kernel/version */
+  fd = fopen(DEVINFO_COLLECTOR_PROCFS_FW_VERSION, "r");
+  if (fd == NULL) {
+    LOG_ERROR("fopen(" DEVINFO_COLLECTOR_PROCFS_FW_VERSION ") ... failed with [%s].", strerror(errno));
+    if(self->fOnGetCallback) {
+      self->fOnGetCallback(value, self->fUserData, SSE_E_ACCES);
+    }
+    return SSE_E_ACCES;
+  }
+  if (fgets(buff, sizeof(buff), fd) == NULL) {
+    LOG_ERROR("fgets() ... failed.");
+    if(self->fOnGetCallback) {
+      self->fOnGetCallback(value, self->fUserData, SSE_E_ACCES);
+    }
+    fclose(fd);
+    return SSE_E_ACCES;
+  }
+  fclose(fd);
+
+  /* Strip CRLF */
+  p = buff;
+  while (*p++ != '\0') {
+    if (*p == 0x0d || *p == 0x0a) {
+      *p ='\0';
+    }
+  }
+
+  /* Extract FW version from OS version like "#SS-Trial_1.1.0 PREEMPT Tue Jun 30 15:37:07 JST 2015" */
+  p = sse_strchr(buff, ' ');
+  if (p == NULL) {
+    length = 0;
+  } else {
+    length = p - (buff + 1);
+  }
+
+  /* Call callback */
+  LOG_DEBUG("FW Version = [%s]", buff);
+  if(self->fOnGetCallback) {
+    value = moat_value_new_string(buff + 1, length, sse_true);
+    ASSERT(value);
+    self->fOnGetCallback(value, self->fUserData, SSE_E_OK);
+    moat_value_free(value);
+  }
+
+  /* Cleanup */
+  self->fStatus = DEVINFO_COLLECTOR_STATUS_COMPLETED;
+  return SSE_E_OK;
+}
 
 static void
 DEVINFOCollector_GetHardwareSimOnComplateCallback(TSseUtilShellCommand* self,

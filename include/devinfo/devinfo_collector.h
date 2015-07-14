@@ -23,6 +23,7 @@ SSE_BEGIN_C_DECLS
 
 #define DEVINFO_COLLECTOR_PROCFS_OS_TYPE     "/proc/sys/kernel/ostype"
 #define DEVINFO_COLLECTOR_PROCFS_OS_VERSION  "/proc/sys/kernel/osrelease"
+#define DEVINFO_COLLECTOR_PROCFS_FW_VERSION  "/proc/sys/kernel/version"
 
 
 enum DEVINFOCollectorStatus_ {

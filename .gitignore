@@ -14,4 +14,5 @@ certs/*.p12
 certs/*.pem
 tools/*.pyc
 package/*.bin
+package/devinfo.conf
 *.zip

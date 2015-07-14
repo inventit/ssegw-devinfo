@@ -4,6 +4,7 @@ import os
 import pprint
 import subprocess
 import sys
+import shutil
 import tools.moatutils as moatutils
 
 CC = os.environ.get('CC', 'cc')
@@ -228,6 +229,15 @@ def configure_moat(o):
   generate_package_json(moat_path, package_name, version)
   generate_skeleton(moat_path, package_name)
 
+def generate_devinfo_config(product):
+  if (product == 'Armadillo-IoT'):
+    src = os.path.join(moat_root, 'src/devinfo/ports/armadillo_iot/devinfo.conf')
+  else:
+    src = os.path.join('src/devinfo/ports/ri/devinfo.conf')
+  dst = os.path.join(moat_root, 'package/devinfo.conf')
+  print 'creating', dst
+  shutil.copyfile(src, dst)
+
 def configure_app(o):
 
   configure_moat(o)
@@ -254,6 +264,7 @@ def configure_app(o):
 
   o['variables']['test_config'] = 'unit' if options.unittest else 'none'
   o['variables']['target_product'] = options.target_product if options.target_product in ['generic', 'Armadillo-IoT' ] else 'generic'
+  generate_devinfo_config(o['variables']['target_product'])
 
 output = {
   'variables': {},

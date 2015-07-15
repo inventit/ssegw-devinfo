@@ -50,8 +50,10 @@ DeviceInfo_CollectOnComplete(sse_int in_err,
   MoatObject *object = NULL;
   sse_char *job_service_id;
   sse_int request_id;
+#ifdef DEVINFO_ENABLE_BASE64_ENCODE
   sse_size encoded_len;
   sse_char *encoded;
+#endif /* DEVINFO_ENABLE_BASE64_ENCODE */
 
   context = (TDEVINFOModelCommand *)in_user_data;
   ASSERT(context);
@@ -79,6 +81,7 @@ DeviceInfo_CollectOnComplete(sse_int in_err,
   }
 
   /* Base64 encode */
+#ifdef DEVINFO_ENABLE_BASE64_ENCODE
   encoded_len = sse_base64_get_encoded_length(sse_string_get_length(devinfo));
   encoded = sse_zeroalloc(encoded_len);
   ASSERT(encoded);
@@ -91,9 +94,14 @@ DeviceInfo_CollectOnComplete(sse_int in_err,
       sse_free(buff);
     }
   }
+#endif /* DEVINFO_ENABLE_BASE64_ENCODE */
 
   /* Create a model object */
+#ifdef DEVINFO_ENABLE_BASE64_ENCODE
   err = moat_object_add_string_value(object, "deviceInfo", encoded, encoded_len, sse_true, sse_false);
+#else
+  err = moat_object_add_string_value(object, "deviceInfo", sse_string_get_cstr(devinfo), sse_string_get_length(devinfo), sse_true, sse_false);
+#endif /* DEVINFO_ENABLE_BASE64_ENCODE */
   if (err != SSE_E_OK) {
     LOG_ERROR("moat_object_add_string_value() ... failed with [%s].", err);
     goto error_exit;

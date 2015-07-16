@@ -65,7 +65,7 @@ xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 ├── moatapp.gyp
 ├── package
 │   ├── package.json
-│   └── token.bin ...... (*)
+│   └── token ...... (*)
 ├── src
 ├── test
 └── tools
@@ -75,11 +75,33 @@ xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 
 ```
 $ git clone https://${USER}@bitbucket.org/inventit/ssegw-devinfo.git
-$ cd ${APP_ROOT}
+$ cd ssegw-devinfo
+$ git checkout <branch name> # if necessary
 $ git submodule init
 $ git submodule update
-$ ./configure
+$ ./configure ...... (*)
 $ make
+```
+
+ターゲットに合わせてクロスコンパイラの設定と configure のオプションの変更を行ってください。
+
+* Debian on PC (x86_64 / i686)
+
+```
+$ configure
+```
+
+* Armadillo-IoT
+
+```
+$ export CROSS=arm-linux-gnueabi-
+$ export CC=${CROSS}gcc
+$ export CXX=${CROSS}g++
+$ export AR=${CROSS}ar
+$ export LD=${CROSS}ld
+$ export RANLIB=${CROSS}ranlib
+$ export STRIP=${CROSS}strip
+$ ./configure --dest-cpu=arm --product=Armadillo-IoT 
 ```
 
 ### パッケージ作成
@@ -92,6 +114,11 @@ $ make package
 ```
 
 ## 変更履歴
+
+Changes in `2.0.0` : July 17, 2015
+
+* ServiceSync v2.1 support
+* Armadillo-IoT support
 
 Changes in `0.0.1` : 2015/04/01
 

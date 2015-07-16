@@ -21,7 +21,7 @@
        ],
       'product_prefix': '',
       'type': 'shared_library',
-      'cflags': [ '-fPIC' ],
+      'cflags': [ '-fPIC', '-DDEVINFO_ENABLE_BASE64_ENCODE' ],
       'include_dirs' : [
         '<(sseutils_include)',
       ],

@@ -48,7 +48,7 @@ DeviceInfo_CollectOnComplete(sse_int in_err,
   TDEVINFOManager *mgr;
   SSEString *devinfo = NULL;
   MoatObject *object = NULL;
-  sse_char *job_service_id;
+  sse_char *job_service_id = NULL;
   sse_int request_id;
 #ifdef DEVINFO_ENABLE_BASE64_ENCODE
   sse_size encoded_len;
@@ -121,6 +121,7 @@ DeviceInfo_CollectOnComplete(sse_int in_err,
   LOG_INFO("moat_send_notification(job_service_id=[%s], key=[%s]) ... in progress.", job_service_id, context->fKey);
   sse_string_free(devinfo, sse_true);
   moat_object_free(object);
+  sse_free(job_service_id);
   return;
 
  error_exit:
@@ -141,6 +142,9 @@ DeviceInfo_CollectOnComplete(sse_int in_err,
   }
   if (object) {
     moat_object_free(object);
+  }
+  if (job_service_id) {
+      sse_free(job_service_id);
   }
   sse_free(context);
   return;

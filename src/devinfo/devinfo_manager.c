@@ -365,13 +365,13 @@ DEVINFOManager_GetVendorCallback(MoatValue* in_vendor, sse_pointer in_user_data,
   if (in_error_code == SSE_E_OK) {
     value = in_vendor;
   } else if (in_error_code == SSE_E_NOENT) {
-    /* If no vendor info has been found and any preset value was not set, set "NO DATA".
+    /* If no vendor info has been found and any preset value was not set, set "".
      */
     key = sse_string_new(DEVINFO_KEY_VENDOR);
     ASSERT(key);
     err = TDEVINFORepository_GetDevinfo(&self->fRepository, key, &value);
     if (err != SSE_E_OK) {
-      value = moat_value_new_string("NO DATA", 0, sse_true);
+      value = moat_value_new_string("", 0, sse_true);
     }
     sse_string_free(key, sse_true);
   } else {
@@ -400,13 +400,13 @@ DEVINFOManager_GetProductCallback(MoatValue* in_product, sse_pointer in_user_dat
   if (in_error_code == SSE_E_OK) {
     value = in_product;
   } else if (in_error_code == SSE_E_NOENT) {
-    /* If no product info has been found and any preset value was not set, set "NO DATA".
+    /* If no product info has been found and any preset value was not set, set "".
      */
     key = sse_string_new(DEVINFO_KEY_PRODUCT);
     ASSERT(key);
     err = TDEVINFORepository_GetDevinfo(&self->fRepository, key, &value);
     if (err != SSE_E_OK) {
-      value = moat_value_new_string("NO DATA", 0, sse_true);
+      value = moat_value_new_string("", 0, sse_true);
     }
     sse_string_free(key, sse_true);
   } else {
@@ -437,13 +437,13 @@ DEVINFOManager_GetModelCallback(MoatValue* in_model, sse_pointer in_user_data, s
   if (in_error_code == SSE_E_OK) {
     value = in_model;
   } else if (in_error_code == SSE_E_NOENT) {
-    /* If no model info has been found and any preset value was not set, set "NO DATA".
+    /* If no model info has been found and any preset value was not set, set "".
      */
     key = sse_string_new(DEVINFO_KEY_MODEL);
     ASSERT(key);
     err = TDEVINFORepository_GetDevinfo(&self->fRepository, key, &value);
     if (err != SSE_E_OK) {
-      value = moat_value_new_string("NO DATA", 0, sse_true);
+      value = moat_value_new_string("", 0, sse_true);
     }
     sse_string_free(key, sse_true);
   } else {
@@ -474,13 +474,13 @@ DEVINFOManager_GetSerialCallback(MoatValue* in_serial, sse_pointer in_user_data,
   if (in_error_code == SSE_E_OK) {
     value = in_serial;
   } else if (in_error_code == SSE_E_NOENT) {
-    /* If no serial info has been found and any preset value was not set, set "NO DATA".
+    /* If no serial info has been found and any preset value was not set, set "".
      */
     key = sse_string_new(DEVINFO_KEY_SERIAL);
     ASSERT(key);
     err = TDEVINFORepository_GetDevinfo(&self->fRepository, key, &value);
     if (err != SSE_E_OK) {
-      value = moat_value_new_string("NO DATA", 0, sse_true);
+      value = moat_value_new_string("", 0, sse_true);
     }
     sse_string_free(key, sse_true);
   } else {
@@ -523,7 +523,7 @@ DEVINFOManager_GetFwVersionCallback(MoatValue* in_version, sse_pointer in_user_d
   if (in_error_code == SSE_E_OK) {
     value = in_version;
   } else if (in_error_code == SSE_E_NOENT) {
-    value = moat_value_new_string("NO DATA", 0, sse_true);
+    value = moat_value_new_string("", 0, sse_true);
   } else {
     LOG_ERROR("Getting devinfo has been failed with [%s].", sse_get_error_string(in_error_code));
   }
@@ -548,7 +548,7 @@ DEVINFOManager_GetDeviceIdCallback(MoatValue* in_device_id, sse_pointer in_user_
   if (in_error_code == SSE_E_OK) {
     value = in_device_id;
   } else if (in_error_code == SSE_E_NOENT) {
-    value = moat_value_new_string("NO DATA", 0, sse_true);
+    value = moat_value_new_string("", 0, sse_true);
   } else {
     LOG_ERROR("Getting devinfo has been failed with [%s].", sse_get_error_string(in_error_code));
   }

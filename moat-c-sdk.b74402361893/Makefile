@@ -41,6 +41,5 @@ distclean:
 	-rm -f config.mk
 
 preparetest: all
-	-cp -f package/devinfo.conf test/$(ARCH)
 	$(PYTHON) tools/test.py --prepare
 

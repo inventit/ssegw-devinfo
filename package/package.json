@@ -1,37 +1,30 @@
 {
-	"name": "devinfo",
-	"version": "1.0.0",
-	"description": "Suncorp Rooster GX View Devic Information",
-	"maintainers": [
-		{
-			"name": "Tokyo Engineering Team",
-			"email": "asparagus@yourinventit.com"
-		}
-	],
-	"bugs": {
-		"mail": "iidn-sys-notice@yourinventit.com"
-	},
-	"main" : "devinfo.so",
-	"models" : {
-		"DeviceInfo" : {
-			"array" : false,
-			"shared" : false,
-			"attributes" : {				
-				"serialNumber" : {"type" : "string"},
-				"eth0Addr" : {"type" : "string"},
-				"eth1Addr" : {"type" : "string"},
-				"hardwareVersion" : {"type" : "string"},
-				"firmwareVersion" : {"type" : "string"},
-				"modemModuleType" : {"type" : "string"},
-				"modemModuleRevision" : {"type" : "string"},
-				"modemModuleFwVersion" : {"type" : "string"},
-				"iccid" : {"type" : "string"},
-				"imsi" : {"type" : "string"},
-				"msisdn" : {"type" : "string"}
-			},
-			"commands" : {
-				"collect" : {"paramType" : null}
-			}
-		}
-	}
+  "name": "devinfo",
+  "version": "2.0.0",
+  "description": "Collect Device Information",
+  "maintainers": [
+    {
+      "name": "Tokyo Engineering Team",
+      "email": "egypt@yourinventit.com"
+    }
+  ],
+  "bugs": {
+    "mail": "egypt@yourinventit.com"
+  },
+  "dependencies": {
+    "moat": ">=1.0.0 <2.0.0"
+  },
+  "main" : "devinfo.so",
+  "models" : {
+    "DeviceInfo" : {
+      "array" : false,
+      "scope" : "device",
+      "attributes" : {
+        "deviceInfo" : {"type" : "string"}
+      },
+      "commands" : {
+        "collect" : {"paramType" : null}
+      }
+    }
+  }
 }

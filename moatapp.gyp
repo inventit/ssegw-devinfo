@@ -13,8 +13,8 @@
       'target_name': '<(package_name)',
       'sources': [
         '<@(sseutils_src)',
+        'ports/ri/src/devinfo_collector.c',
         'src/devinfo/devinfo_repository.c',
-        'src/devinfo/ports/ri/devinfo_collector.c',
         'src/devinfo/devinfo_manager.c',
         'src/devinfo/devinfo_model_command.c',
         'src/<(package_name).c',
@@ -41,7 +41,7 @@
         }],
         ['target_product == "Armadillo-IoT"', {
           'sources': [
-            'src/devinfo/ports/armadillo_iot/devinfo_collector.c',
+            'ports/armadillo_iot/src/devinfo_collector.c',
           ],
         }],
       ],

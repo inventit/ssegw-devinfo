@@ -5,7 +5,7 @@
   'includes': [
     'common.gypi',
     'config.gypi',
-    './ssegw-utils-moatc/sseutils.gypi',
+    './moat-c-utils/sseutils.gypi',
   ],
   'targets': [
     # your M2M/IoT application

@@ -1,6 +1,6 @@
 {
   'variables': {
-    'sseutils_root': './ssegw-utils-moatc',
+    'sseutils_root': './moat-c-utils',
   },
   'includes': [
     'common.gypi',

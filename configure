@@ -55,7 +55,7 @@ parser.add_option("--unittest",
 parser.add_option("--product",
     action="store",
     dest="target_product",
-    help="M2M Gateway product to build for. Valid values are: generic, Armadillo-IoT, OpenBlocks-IoT.")
+    help="M2M Gateway product to build for. Valid values are: generic, Armadillo-IoT, OpenBlocks-IoT, RaspberryPi.")
 
 (options, args) = parser.parse_args()
 
@@ -265,7 +265,7 @@ def configure_app(o):
   o[ 'ldflags' ] = [ '-L' + moat_lib_dir ]
 
   o['variables']['test_config'] = 'unit' if options.unittest else 'none'
-  o['variables']['target_product'] = options.target_product if options.target_product in ['generic', 'Armadillo-IoT', 'OpenBlocks-IoT' ] else 'generic'
+  o['variables']['target_product'] = options.target_product if options.target_product in ['generic', 'Armadillo-IoT', 'OpenBlocks-IoT', 'RaspberryPi' ] else 'generic'
   generate_devinfo_config(o['variables']['target_product'])
 
 output = {

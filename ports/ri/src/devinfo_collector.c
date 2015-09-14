@@ -558,7 +558,7 @@ TDEVINFOCollector_GetHardwarePlatformFwVersion(TDEVINFOCollector* self,
 					       DEVINFOCollector_OnGetCallback in_callback,
 					       sse_pointer in_user_data)
 {
-  LOG_WARN("This function should not be called. Concrete function for each gateways should be called.");
+  LOG_DEBUG("This function should not be called. Concrete function for each gateways should be called.");
   return TDEVINFOCollector_ReturnNoEntry(self, in_callback, in_user_data);
 }
 
@@ -620,7 +620,7 @@ TDEVINFOCollector_GetHardwareModemType(TDEVINFOCollector* self,
 				       DEVINFOCollector_OnGetCallback in_callback,
 				       sse_pointer in_user_data)
 {
-  LOG_WARN("This function should not be called. Concrete function for each gateways should be called.");
+  LOG_DEBUG("This function should not be called. Concrete function for each gateways should be called.");
   return TDEVINFOCollector_ReturnNoEntry(self, in_callback, in_user_data);
 }
 
@@ -630,7 +630,7 @@ TDEVINFOCollector_GetHardwareModemHwVersion(TDEVINFOCollector* self,
 					    DEVINFOCollector_OnGetCallback in_callback,
 					    sse_pointer in_user_data)
 {
-  LOG_WARN("This function should not be called. Concrete function for each gateways should be called.");
+  LOG_DEBUG("This function should not be called. Concrete function for each gateways should be called.");
   return TDEVINFOCollector_ReturnNoEntry(self, in_callback, in_user_data);
 }
 
@@ -640,7 +640,7 @@ TDEVINFOCollector_GetHardwareModemFwVersion(TDEVINFOCollector* self,
 					    DEVINFOCollector_OnGetCallback in_callback,
 					    sse_pointer in_user_data)
 {
-  LOG_WARN("This function should not be called. Concrete function for each gateways should be called.");
+  LOG_DEBUG("This function should not be called. Concrete function for each gateways should be called.");
   return TDEVINFOCollector_ReturnNoEntry(self, in_callback, in_user_data);
 }
 

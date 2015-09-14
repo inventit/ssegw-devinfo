@@ -43,6 +43,11 @@
             'ports/armadillo_iot/src/devinfo_collector.c',
           ],
         }],
+        ['target_product == "OpenBlocks-IoT"', {
+          'sources': [
+            'ports/obs_iot/src/devinfo_collector.c',
+          ],
+        }],
       ],
     },
   ],

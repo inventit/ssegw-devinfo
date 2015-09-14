@@ -67,7 +67,7 @@ DEVINFOCollector_FindEntryFromCpuInfo(const sse_char *in_key, sse_char **out_val
 {
   FILE *fp;
   sse_char *arg = NULL;
-  sse_uint size = 0;
+  size_t size = 0;
 
   if ((fp = fopen("/proc/cpuinfo", "r")) == NULL) {
     sse_int err_no = errno;
@@ -199,7 +199,53 @@ TDEVINFOCollector_GetHardwarePlatformVendor(TDEVINFOCollector* self,
 					    DEVINFOCollector_OnGetCallback in_callback,
 					    sse_pointer in_user_data)
 {
-  LOG_WARN("This function should not be called. Concrete function for each gateways should be called.");
+  if (DEVINFOCollector_CompareArch("x86_64") ||
+      DEVINFOCollector_CompareArch("i686") ||
+      DEVINFOCollector_CompareArch("i386") ||
+      DEVINFOCollector_CompareArch("i486")) {
+    FILE *fd;
+    sse_char buff[64];
+    MoatValue *value = NULL;
+
+    self->fOnGetCallback = in_callback;
+    self->fUserData = in_user_data;
+    self->fStatus = DEVINFO_COLLECTOR_STATUS_COLLECTING;
+    
+    fd = fopen("/sys/devices/virtual/dmi/id/board_vendor", "r");
+    if (fd == NULL) {
+      LOG_ERROR("fopen(" DEVINFO_COLLECTOR_PROCFS_OS_TYPE ") ... failed with [%s].", strerror(errno));
+      return TDEVINFOCollector_ReturnNoEntry(self, in_callback, in_user_data);;
+    }
+    if (fgets(buff, sizeof(buff), fd) == NULL) {
+      LOG_ERROR("fgets() ... failed.");
+      fclose(fd);
+      return TDEVINFOCollector_ReturnNoEntry(self, in_callback, in_user_data);
+    }
+    fclose(fd);
+
+    /* Strip CRLF */
+    {
+      sse_char *p = buff;
+      while (*p++ != '\0') {
+        if (*p == 0x0d || *p == 0x0a) {
+          *p ='\0';
+        }
+      }
+    }
+
+    LOG_DEBUG("Product = [%s]", buff);
+    value = moat_value_new_string(buff, 0, sse_true);
+    ASSERT(value);
+    
+    if (self->fOnGetCallback) {
+      self->fOnGetCallback(value, self->fUserData, SSE_E_OK);
+    }
+    
+    if (value) moat_value_free(value);
+    self->fStatus = DEVINFO_COLLECTOR_STATUS_COMPLETED;
+    return SSE_E_OK;
+  }
+
   return TDEVINFOCollector_ReturnNoEntry(self, in_callback, in_user_data);
 }
 
@@ -208,7 +254,53 @@ TDEVINFOCollector_GetHardwarePlatformProduct(TDEVINFOCollector* self,
 					     DEVINFOCollector_OnGetCallback in_callback,
 					     sse_pointer in_user_data)
 {
-  LOG_WARN("This function should not be called. Concrete function for each gateways should be called.");
+  if (DEVINFOCollector_CompareArch("x86_64") ||
+      DEVINFOCollector_CompareArch("i686") ||
+      DEVINFOCollector_CompareArch("i386") ||
+      DEVINFOCollector_CompareArch("i486")) {
+    FILE *fd;
+    sse_char buff[64];
+    MoatValue *value = NULL;
+
+    self->fOnGetCallback = in_callback;
+    self->fUserData = in_user_data;
+    self->fStatus = DEVINFO_COLLECTOR_STATUS_COLLECTING;
+    
+    fd = fopen("/sys/devices/virtual/dmi/id/board_name", "r");
+    if (fd == NULL) {
+      LOG_ERROR("fopen(" DEVINFO_COLLECTOR_PROCFS_OS_TYPE ") ... failed with [%s].", strerror(errno));
+      return TDEVINFOCollector_ReturnNoEntry(self, in_callback, in_user_data);;
+    }
+    if (fgets(buff, sizeof(buff), fd) == NULL) {
+      LOG_ERROR("fgets() ... failed.");
+      fclose(fd);
+      return TDEVINFOCollector_ReturnNoEntry(self, in_callback, in_user_data);
+    }
+    fclose(fd);
+
+    /* Strip CRLF */
+    {
+      sse_char *p = buff;
+      while (*p++ != '\0') {
+        if (*p == 0x0d || *p == 0x0a) {
+          *p ='\0';
+        }
+      }
+    }
+
+    LOG_DEBUG("Product = [%s]", buff);
+    value = moat_value_new_string(buff, 0, sse_true);
+    ASSERT(value);
+    
+    if (self->fOnGetCallback) {
+      self->fOnGetCallback(value, self->fUserData, SSE_E_OK);
+    }
+    
+    if (value) moat_value_free(value);
+    self->fStatus = DEVINFO_COLLECTOR_STATUS_COMPLETED;
+    return SSE_E_OK;
+  }
+
   return TDEVINFOCollector_ReturnNoEntry(self, in_callback, in_user_data);
 }
 
@@ -217,47 +309,90 @@ TDEVINFOCollector_GetHardwarePlatformModel(TDEVINFOCollector* self,
 					   DEVINFOCollector_OnGetCallback in_callback,
 					   sse_pointer in_user_data)
 {
-  sse_int err;
-  sse_char *model = NULL;
-  MoatValue *value = NULL;
+  if (DEVINFOCollector_CompareArch("x86_64") ||
+      DEVINFOCollector_CompareArch("i686") ||
+      DEVINFOCollector_CompareArch("i386") ||
+      DEVINFOCollector_CompareArch("i486")) {
+    FILE *fd;
+    sse_char buff[64];
+    MoatValue *value = NULL;
 
-  ASSERT(self);
-
-  if (!DEVINFOCollector_CompareArch("arm")) {
-    return TDEVINFOCollector_ReturnNoEntry(self, in_callback, in_user_data);
-  }
-
-  /* ARM architecture has following entries in /proc/cpuinfo.
-   *
-   *    Hardware: BCM2709
-   *    Revision: a01041
-   *    Serial: 00000000a4c1a9a3
-   */  
-  err = DEVINFOCollector_FindEntryFromCpuInfo("Hardware", &model);
-  if (err != SSE_E_OK) {
-    if (err == SSE_E_NOENT) {
-      LOG_WARN("DEVINFOCollector_FindEntryFromCpuInfo() has been failed with [%s].", sse_get_error_string(err));
-    } else {
-      LOG_ERROR("DEVINFOCollector_FindEntryFromCpuInfo() has been failed with [%s].", sse_get_error_string(err));
+    self->fOnGetCallback = in_callback;
+    self->fUserData = in_user_data;
+    self->fStatus = DEVINFO_COLLECTOR_STATUS_COLLECTING;
+    
+    fd = fopen("/sys/devices/virtual/dmi/id/board_name", "r");
+    if (fd == NULL) {
+      LOG_ERROR("fopen(" DEVINFO_COLLECTOR_PROCFS_OS_TYPE ") ... failed with [%s].", strerror(errno));
+      return TDEVINFOCollector_ReturnNoEntry(self, in_callback, in_user_data);;
     }
-    return TDEVINFOCollector_ReturnNoEntry(self, in_callback, in_user_data);
+    if (fgets(buff, sizeof(buff), fd) == NULL) {
+      LOG_ERROR("fgets() ... failed.");
+      fclose(fd);
+      return TDEVINFOCollector_ReturnNoEntry(self, in_callback, in_user_data);
+    }
+    fclose(fd);
+
+    /* Strip CRLF */
+    {
+      sse_char *p = buff;
+      while (*p++ != '\0') {
+        if (*p == 0x0d || *p == 0x0a) {
+          *p ='\0';
+        }
+      }
+    }
+
+    LOG_DEBUG("Product = [%s]", buff);
+    value = moat_value_new_string(buff, 0, sse_true);
+    ASSERT(value);
+    
+    if (self->fOnGetCallback) {
+      self->fOnGetCallback(value, self->fUserData, SSE_E_OK);
+    }
+    
+    if (value) moat_value_free(value);
+    self->fStatus = DEVINFO_COLLECTOR_STATUS_COMPLETED;
+    return SSE_E_OK;
+
+  } else if (DEVINFOCollector_CompareArch("arm")) {
+    sse_int err;
+    sse_char *model = NULL;
+    MoatValue *value = NULL;
+
+    /* ARM architecture has following entries in /proc/cpuinfo.
+     *
+     *    Hardware: BCM2709
+     *    Revision: a01041
+     *    Serial: 00000000a4c1a9a3
+     */  
+    err = DEVINFOCollector_FindEntryFromCpuInfo("Hardware", &model);
+    if (err != SSE_E_OK) {
+      if (err == SSE_E_NOENT) {
+        LOG_WARN("DEVINFOCollector_FindEntryFromCpuInfo() has been failed with [%s].", sse_get_error_string(err));
+      } else {
+        LOG_ERROR("DEVINFOCollector_FindEntryFromCpuInfo() has been failed with [%s].", sse_get_error_string(err));
+      }
+      return TDEVINFOCollector_ReturnNoEntry(self, in_callback, in_user_data);
+    }
+
+    self->fOnGetCallback = in_callback;
+    self->fUserData = in_user_data;
+    self->fStatus = DEVINFO_COLLECTOR_STATUS_COLLECTING;
+
+    value = moat_value_new_string(model, 0, sse_true);
+    ASSERT(value);
+
+    if (self->fOnGetCallback) {
+      self->fOnGetCallback(value, self->fUserData, SSE_E_OK);
+    }
+
+    if (value) moat_value_free(value);
+    if (model) sse_free(model);
+    self->fStatus = DEVINFO_COLLECTOR_STATUS_COMPLETED;
+    return SSE_E_OK;
   }
-
-  self->fOnGetCallback = in_callback;
-  self->fUserData = in_user_data;
-  self->fStatus = DEVINFO_COLLECTOR_STATUS_COLLECTING;
-
-  value = moat_value_new_string(model, 0, sse_true);
-  ASSERT(value);
-
-  if (self->fOnGetCallback) {
-    self->fOnGetCallback(value, self->fUserData, SSE_E_OK);
-  }
-
-  if (value) moat_value_free(value);
-  if (model) sse_free(model);
-  self->fStatus = DEVINFO_COLLECTOR_STATUS_COMPLETED;
-  return SSE_E_OK;
+  return TDEVINFOCollector_ReturnNoEntry(self, in_callback, in_user_data);
 }
 
 sse_int __attribute__((weak))
@@ -265,47 +400,92 @@ TDEVINFOCollector_GetHardwarePlatformSerial(TDEVINFOCollector* self,
 					    DEVINFOCollector_OnGetCallback in_callback,
 					    sse_pointer in_user_data)
 {
-  sse_int err;
-  sse_char *serial = NULL;
-  MoatValue *value = NULL;
-
   ASSERT(self);
+  if (DEVINFOCollector_CompareArch("x86_64") ||
+      DEVINFOCollector_CompareArch("i686") ||
+      DEVINFOCollector_CompareArch("i386") ||
+      DEVINFOCollector_CompareArch("i486")) {
+    FILE *fd;
+    sse_char buff[64];
+    MoatValue *value = NULL;
 
-  if (!DEVINFOCollector_CompareArch("arm")) {
-    return TDEVINFOCollector_ReturnNoEntry(self, in_callback, in_user_data);
-  }
-
-  /* ARM architecture has following entries in /proc/cpuinfo.
-   *
-   *    Hardware: BCM2709
-   *    Revision: a01041
-   *    Serial: 00000000a4c1a9a3
-   */  
-  err = DEVINFOCollector_FindEntryFromCpuInfo("Serial", &serial);
-  if (err != SSE_E_OK) {
-    if (err == SSE_E_NOENT) {
-      LOG_WARN("DEVINFOCollector_FindEntryFromCpuInfo() has been failed with [%s].", sse_get_error_string(err));
-    } else {
-      LOG_ERROR("DEVINFOCollector_FindEntryFromCpuInfo() has been failed with [%s].", sse_get_error_string(err));
+    self->fOnGetCallback = in_callback;
+    self->fUserData = in_user_data;
+    self->fStatus = DEVINFO_COLLECTOR_STATUS_COLLECTING;
+    
+    fd = fopen("/sys/devices/virtual/dmi/id/board_serial", "r");
+    if (fd == NULL) {
+      LOG_ERROR("fopen(" DEVINFO_COLLECTOR_PROCFS_OS_TYPE ") ... failed with [%s].", strerror(errno));
+      return TDEVINFOCollector_ReturnNoEntry(self, in_callback, in_user_data);;
     }
-    return TDEVINFOCollector_ReturnNoEntry(self, in_callback, in_user_data);
+    if (fgets(buff, sizeof(buff), fd) == NULL) {
+      LOG_ERROR("fgets() ... failed.");
+      fclose(fd);
+      return TDEVINFOCollector_ReturnNoEntry(self, in_callback, in_user_data);
+    }
+    fclose(fd);
+
+    /* Strip CRLF */
+    {
+      sse_char *p = buff;
+      while (*p++ != '\0') {
+        if (*p == 0x0d || *p == 0x0a) {
+          *p ='\0';
+        }
+      }
+    }
+
+    LOG_DEBUG("Product = [%s]", buff);
+    value = moat_value_new_string(buff, 0, sse_true);
+    ASSERT(value);
+    
+    if (self->fOnGetCallback) {
+      self->fOnGetCallback(value, self->fUserData, SSE_E_OK);
+    }
+    
+    if (value) moat_value_free(value);
+    self->fStatus = DEVINFO_COLLECTOR_STATUS_COMPLETED;
+    return SSE_E_OK;
+
+  } else if (DEVINFOCollector_CompareArch("arm")) {
+    sse_int err;
+    sse_char *serial = NULL;
+    MoatValue *value = NULL;
+
+    /* ARM architecture has following entries in /proc/cpuinfo.
+     *
+     *    Hardware: BCM2709
+     *    Revision: a01041
+     *    Serial: 00000000a4c1a9a3
+     */  
+    err = DEVINFOCollector_FindEntryFromCpuInfo("Serial", &serial);
+    if (err != SSE_E_OK) {
+      if (err == SSE_E_NOENT) {
+        LOG_WARN("DEVINFOCollector_FindEntryFromCpuInfo() has been failed with [%s].", sse_get_error_string(err));
+      } else {
+        LOG_ERROR("DEVINFOCollector_FindEntryFromCpuInfo() has been failed with [%s].", sse_get_error_string(err));
+      }
+      return TDEVINFOCollector_ReturnNoEntry(self, in_callback, in_user_data);
+    }
+
+    self->fOnGetCallback = in_callback;
+    self->fUserData = in_user_data;
+    self->fStatus = DEVINFO_COLLECTOR_STATUS_COLLECTING;
+    
+    value = moat_value_new_string(serial, 0, sse_true);
+    ASSERT(value);
+    
+    if (self->fOnGetCallback) {
+      self->fOnGetCallback(value, self->fUserData, SSE_E_OK);
+    }
+    
+    if (value) moat_value_free(value);
+    if (serial) sse_free(serial);
+    self->fStatus = DEVINFO_COLLECTOR_STATUS_COMPLETED;
+    return SSE_E_OK;
   }
 
-  self->fOnGetCallback = in_callback;
-  self->fUserData = in_user_data;
-  self->fStatus = DEVINFO_COLLECTOR_STATUS_COLLECTING;
-
-  value = moat_value_new_string(serial, 0, sse_true);
-  ASSERT(value);
-
-  if (self->fOnGetCallback) {
-    self->fOnGetCallback(value, self->fUserData, SSE_E_OK);
-  }
-
-  if (value) moat_value_free(value);
-  if (serial) sse_free(serial);
-  self->fStatus = DEVINFO_COLLECTOR_STATUS_COMPLETED;
-  return SSE_E_OK;
+  return TDEVINFOCollector_ReturnNoEntry(self, in_callback, in_user_data);
 }
 
 sse_int __attribute__((weak))
@@ -313,47 +493,92 @@ TDEVINFOCollector_GetHardwarePlatformHwVersion(TDEVINFOCollector* self,
 					       DEVINFOCollector_OnGetCallback in_callback,
 					       sse_pointer in_user_data)
 {
-  sse_int err;
-  sse_char *version = NULL;
-  MoatValue *value = NULL;
-
   ASSERT(self);
 
-  if (!DEVINFOCollector_CompareArch("arm")) {
-    return TDEVINFOCollector_ReturnNoEntry(self, in_callback, in_user_data);
-  }
+  if (DEVINFOCollector_CompareArch("x86_64") ||
+      DEVINFOCollector_CompareArch("i686") ||
+      DEVINFOCollector_CompareArch("i386") ||
+      DEVINFOCollector_CompareArch("i486")) {
+    FILE *fd;
+    sse_char buff[64];
+    MoatValue *value = NULL;
 
-  /* ARM architecture has following entries in /proc/cpuinfo.
-   *
-   *    Hardware: BCM2709
-   *    Revision: a01041
-   *    Serial: 00000000a4c1a9a3
-   */  
-  err = DEVINFOCollector_FindEntryFromCpuInfo("Revision", &version);
-  if (err != SSE_E_OK) {
-    if (err == SSE_E_NOENT) {
-      LOG_WARN("DEVINFOCollector_FindEntryFromCpuInfo() has been failed with [%s].", sse_get_error_string(err));
-    } else {
-      LOG_ERROR("DEVINFOCollector_FindEntryFromCpuInfo() has been failed with [%s].", sse_get_error_string(err));
+    self->fOnGetCallback = in_callback;
+    self->fUserData = in_user_data;
+    self->fStatus = DEVINFO_COLLECTOR_STATUS_COLLECTING;
+    
+    fd = fopen("/sys/devices/virtual/dmi/id/board_version", "r");
+    if (fd == NULL) {
+      LOG_ERROR("fopen(" DEVINFO_COLLECTOR_PROCFS_OS_TYPE ") ... failed with [%s].", strerror(errno));
+      return TDEVINFOCollector_ReturnNoEntry(self, in_callback, in_user_data);;
     }
-    return TDEVINFOCollector_ReturnNoEntry(self, in_callback, in_user_data);
+    if (fgets(buff, sizeof(buff), fd) == NULL) {
+      LOG_ERROR("fgets() ... failed.");
+      fclose(fd);
+      return TDEVINFOCollector_ReturnNoEntry(self, in_callback, in_user_data);
+    }
+    fclose(fd);
+
+    /* Strip CRLF */
+    {
+      sse_char *p = buff;
+      while (*p++ != '\0') {
+        if (*p == 0x0d || *p == 0x0a) {
+          *p ='\0';
+        }
+      }
+    }
+
+    LOG_DEBUG("Product = [%s]", buff);
+    value = moat_value_new_string(buff, 0, sse_true);
+    ASSERT(value);
+    
+    if (self->fOnGetCallback) {
+      self->fOnGetCallback(value, self->fUserData, SSE_E_OK);
+    }
+    
+    if (value) moat_value_free(value);
+    self->fStatus = DEVINFO_COLLECTOR_STATUS_COMPLETED;
+    return SSE_E_OK;
+
+  } else if (DEVINFOCollector_CompareArch("arm")) {
+    sse_int err;
+    sse_char *version = NULL;
+    MoatValue *value = NULL;
+
+    /* ARM architecture has following entries in /proc/cpuinfo.
+     *
+     *    Hardware: BCM2709
+     *    Revision: a01041
+     *    Serial: 00000000a4c1a9a3
+     */  
+    err = DEVINFOCollector_FindEntryFromCpuInfo("Revision", &version);
+    if (err != SSE_E_OK) {
+      if (err == SSE_E_NOENT) {
+        LOG_WARN("DEVINFOCollector_FindEntryFromCpuInfo() has been failed with [%s].", sse_get_error_string(err));
+      } else {
+        LOG_ERROR("DEVINFOCollector_FindEntryFromCpuInfo() has been failed with [%s].", sse_get_error_string(err));
+      }
+      return TDEVINFOCollector_ReturnNoEntry(self, in_callback, in_user_data);
+    }
+
+    self->fOnGetCallback = in_callback;
+    self->fUserData = in_user_data;
+    self->fStatus = DEVINFO_COLLECTOR_STATUS_COLLECTING;
+    
+    value = moat_value_new_string(version, 0, sse_true);
+    ASSERT(value);
+    
+    if (self->fOnGetCallback) {
+      self->fOnGetCallback(value, self->fUserData, SSE_E_OK);
+    }
+
+    if (value) moat_value_free(value);
+    if (version) sse_free(version);
+    self->fStatus = DEVINFO_COLLECTOR_STATUS_COMPLETED;
+    return SSE_E_OK;
   }
-
-  self->fOnGetCallback = in_callback;
-  self->fUserData = in_user_data;
-  self->fStatus = DEVINFO_COLLECTOR_STATUS_COLLECTING;
-
-  value = moat_value_new_string(version, 0, sse_true);
-  ASSERT(value);
-
-  if (self->fOnGetCallback) {
-    self->fOnGetCallback(value, self->fUserData, SSE_E_OK);
-  }
-
-  if (value) moat_value_free(value);
-  if (version) sse_free(version);
-  self->fStatus = DEVINFO_COLLECTOR_STATUS_COMPLETED;
-  return SSE_E_OK;
+  return TDEVINFOCollector_ReturnNoEntry(self, in_callback, in_user_data);
 }
 
 sse_int __attribute__((weak))
@@ -659,7 +884,7 @@ TDEVINFOCollector_GetHardwareNetworkNameserverOnErrorCallback(TSseUtilShellComma
 
   LOG_ERROR("collector=[%p], command=[%s] failed with code=[%d], message=[%s]", collector, self->fShellCommand, in_error_code, in_message);
   if(collector->fOnGetCallback) {
-      collector->fOnGetCallback(NULL, collector->fUserData, in_error_code);
+    collector->fOnGetCallback(NULL, collector->fUserData, in_error_code);
   }
   collector->fStatus = DEVINFO_COLLECTOR_STATUS_ABEND;
 }

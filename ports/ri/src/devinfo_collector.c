@@ -103,6 +103,38 @@ DEVINFOCollector_FindEntryFromCpuInfo(const sse_char *in_key, sse_char **out_val
 
 }
 
+static sse_int
+DEVINFOCollector_ReadProc(const sse_char *proc, sse_char **out_value)
+{
+  FILE *fd;
+  sse_char buff[64];
+
+  fd = fopen(proc, "r");
+  if (fd == NULL) {
+    LOG_ERROR("fopen() ... failed with [%s].", strerror(errno));
+    return SSE_E_ACCES;
+  }
+  if (fgets(buff, sizeof(buff), fd) == NULL) {
+    LOG_ERROR("fgets() ... failed.");
+    fclose(fd);
+    return SSE_E_ACCES;
+  }
+  fclose(fd);
+
+  /* Strip CRLF */
+  {
+    sse_char *p = buff;
+    while (*p++ != '\0') {
+      if (*p == 0x0d || *p == 0x0a) {
+        *p ='\0';
+      }
+    }
+  }
+  *out_value = sse_strdup(buff);
+  ASSERT(*out_value);
+  return SSE_E_OK;
+}
+
 static void
 DEVINFOCollector_FreeListedSSEString(SSESList *in_list)
 {
@@ -203,37 +235,21 @@ TDEVINFOCollector_GetHardwarePlatformVendor(TDEVINFOCollector* self,
       DEVINFOCollector_CompareArch("i686") ||
       DEVINFOCollector_CompareArch("i386") ||
       DEVINFOCollector_CompareArch("i486")) {
-    FILE *fd;
-    sse_char buff[64];
     MoatValue *value = NULL;
+    sse_char *buff = NULL;
+    sse_int err;
 
     self->fOnGetCallback = in_callback;
     self->fUserData = in_user_data;
     self->fStatus = DEVINFO_COLLECTOR_STATUS_COLLECTING;
     
-    fd = fopen("/sys/devices/virtual/dmi/id/board_vendor", "r");
-    if (fd == NULL) {
-      LOG_ERROR("fopen(" DEVINFO_COLLECTOR_PROCFS_OS_TYPE ") ... failed with [%s].", strerror(errno));
-      return TDEVINFOCollector_ReturnNoEntry(self, in_callback, in_user_data);;
-    }
-    if (fgets(buff, sizeof(buff), fd) == NULL) {
-      LOG_ERROR("fgets() ... failed.");
-      fclose(fd);
+    err = DEVINFOCollector_ReadProc("/sys/devices/virtual/dmi/id/board_vendor", &buff);
+    if (err != SSE_E_OK) {
+      LOG_ERROR("DEVINFOCollector_ReadProc() has been failed with [%s].", sse_get_error_string(err));
       return TDEVINFOCollector_ReturnNoEntry(self, in_callback, in_user_data);
     }
-    fclose(fd);
-
-    /* Strip CRLF */
-    {
-      sse_char *p = buff;
-      while (*p++ != '\0') {
-        if (*p == 0x0d || *p == 0x0a) {
-          *p ='\0';
-        }
-      }
-    }
-
-    LOG_DEBUG("Product = [%s]", buff);
+     
+    LOG_DEBUG("Vendor = [%s]", buff);
     value = moat_value_new_string(buff, 0, sse_true);
     ASSERT(value);
     
@@ -242,6 +258,7 @@ TDEVINFOCollector_GetHardwarePlatformVendor(TDEVINFOCollector* self,
     }
     
     if (value) moat_value_free(value);
+    if (buff)  sse_free(buff);
     self->fStatus = DEVINFO_COLLECTOR_STATUS_COMPLETED;
     return SSE_E_OK;
   }
@@ -258,34 +275,18 @@ TDEVINFOCollector_GetHardwarePlatformProduct(TDEVINFOCollector* self,
       DEVINFOCollector_CompareArch("i686") ||
       DEVINFOCollector_CompareArch("i386") ||
       DEVINFOCollector_CompareArch("i486")) {
-    FILE *fd;
-    sse_char buff[64];
     MoatValue *value = NULL;
+    sse_char *buff = NULL;
+    sse_int err;
 
     self->fOnGetCallback = in_callback;
     self->fUserData = in_user_data;
     self->fStatus = DEVINFO_COLLECTOR_STATUS_COLLECTING;
     
-    fd = fopen("/sys/devices/virtual/dmi/id/board_name", "r");
-    if (fd == NULL) {
-      LOG_ERROR("fopen(" DEVINFO_COLLECTOR_PROCFS_OS_TYPE ") ... failed with [%s].", strerror(errno));
-      return TDEVINFOCollector_ReturnNoEntry(self, in_callback, in_user_data);;
-    }
-    if (fgets(buff, sizeof(buff), fd) == NULL) {
-      LOG_ERROR("fgets() ... failed.");
-      fclose(fd);
+    err = DEVINFOCollector_ReadProc("/sys/devices/virtual/dmi/id/board_name", &buff);
+    if (err != SSE_E_OK) {
+      LOG_ERROR("DEVINFOCollector_ReadProc() has been failed with [%s].", sse_get_error_string(err));
       return TDEVINFOCollector_ReturnNoEntry(self, in_callback, in_user_data);
-    }
-    fclose(fd);
-
-    /* Strip CRLF */
-    {
-      sse_char *p = buff;
-      while (*p++ != '\0') {
-        if (*p == 0x0d || *p == 0x0a) {
-          *p ='\0';
-        }
-      }
     }
 
     LOG_DEBUG("Product = [%s]", buff);
@@ -297,6 +298,7 @@ TDEVINFOCollector_GetHardwarePlatformProduct(TDEVINFOCollector* self,
     }
     
     if (value) moat_value_free(value);
+    if (buff)  sse_free(buff);
     self->fStatus = DEVINFO_COLLECTOR_STATUS_COMPLETED;
     return SSE_E_OK;
   }
@@ -313,37 +315,21 @@ TDEVINFOCollector_GetHardwarePlatformModel(TDEVINFOCollector* self,
       DEVINFOCollector_CompareArch("i686") ||
       DEVINFOCollector_CompareArch("i386") ||
       DEVINFOCollector_CompareArch("i486")) {
-    FILE *fd;
-    sse_char buff[64];
     MoatValue *value = NULL;
+    sse_char *buff = NULL;
+    sse_int err;
 
     self->fOnGetCallback = in_callback;
     self->fUserData = in_user_data;
     self->fStatus = DEVINFO_COLLECTOR_STATUS_COLLECTING;
-    
-    fd = fopen("/sys/devices/virtual/dmi/id/board_name", "r");
-    if (fd == NULL) {
-      LOG_ERROR("fopen(" DEVINFO_COLLECTOR_PROCFS_OS_TYPE ") ... failed with [%s].", strerror(errno));
-      return TDEVINFOCollector_ReturnNoEntry(self, in_callback, in_user_data);;
-    }
-    if (fgets(buff, sizeof(buff), fd) == NULL) {
-      LOG_ERROR("fgets() ... failed.");
-      fclose(fd);
+
+    err = DEVINFOCollector_ReadProc("/sys/devices/virtual/dmi/id/board_name", &buff);
+    if (err != SSE_E_OK) {
+      LOG_ERROR("DEVINFOCollector_ReadProc() has been failed with [%s].", sse_get_error_string(err));
       return TDEVINFOCollector_ReturnNoEntry(self, in_callback, in_user_data);
     }
-    fclose(fd);
-
-    /* Strip CRLF */
-    {
-      sse_char *p = buff;
-      while (*p++ != '\0') {
-        if (*p == 0x0d || *p == 0x0a) {
-          *p ='\0';
-        }
-      }
-    }
-
-    LOG_DEBUG("Product = [%s]", buff);
+    
+    LOG_DEBUG("Model = [%s]", buff);
     value = moat_value_new_string(buff, 0, sse_true);
     ASSERT(value);
     
@@ -352,6 +338,7 @@ TDEVINFOCollector_GetHardwarePlatformModel(TDEVINFOCollector* self,
     }
     
     if (value) moat_value_free(value);
+    if (buff)  sse_free(buff);
     self->fStatus = DEVINFO_COLLECTOR_STATUS_COMPLETED;
     return SSE_E_OK;
 
@@ -405,37 +392,21 @@ TDEVINFOCollector_GetHardwarePlatformSerial(TDEVINFOCollector* self,
       DEVINFOCollector_CompareArch("i686") ||
       DEVINFOCollector_CompareArch("i386") ||
       DEVINFOCollector_CompareArch("i486")) {
-    FILE *fd;
-    sse_char buff[64];
     MoatValue *value = NULL;
+    sse_char *buff = NULL;
+    sse_int err;
 
     self->fOnGetCallback = in_callback;
     self->fUserData = in_user_data;
     self->fStatus = DEVINFO_COLLECTOR_STATUS_COLLECTING;
-    
-    fd = fopen("/sys/devices/virtual/dmi/id/board_serial", "r");
-    if (fd == NULL) {
-      LOG_ERROR("fopen(" DEVINFO_COLLECTOR_PROCFS_OS_TYPE ") ... failed with [%s].", strerror(errno));
-      return TDEVINFOCollector_ReturnNoEntry(self, in_callback, in_user_data);;
-    }
-    if (fgets(buff, sizeof(buff), fd) == NULL) {
-      LOG_ERROR("fgets() ... failed.");
-      fclose(fd);
+
+    err = DEVINFOCollector_ReadProc("/sys/devices/virtual/dmi/id/board_serial", &buff);
+    if (err != SSE_E_OK) {
+      LOG_ERROR("DEVINFOCollector_ReadProc() has been failed with [%s].", sse_get_error_string(err));
       return TDEVINFOCollector_ReturnNoEntry(self, in_callback, in_user_data);
     }
-    fclose(fd);
 
-    /* Strip CRLF */
-    {
-      sse_char *p = buff;
-      while (*p++ != '\0') {
-        if (*p == 0x0d || *p == 0x0a) {
-          *p ='\0';
-        }
-      }
-    }
-
-    LOG_DEBUG("Product = [%s]", buff);
+    LOG_DEBUG("Serial = [%s]", buff);
     value = moat_value_new_string(buff, 0, sse_true);
     ASSERT(value);
     
@@ -444,6 +415,7 @@ TDEVINFOCollector_GetHardwarePlatformSerial(TDEVINFOCollector* self,
     }
     
     if (value) moat_value_free(value);
+    if (buff)  sse_free(buff);
     self->fStatus = DEVINFO_COLLECTOR_STATUS_COMPLETED;
     return SSE_E_OK;
 

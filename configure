@@ -234,6 +234,8 @@ def generate_devinfo_config(product):
     src = os.path.join(moat_root, 'ports/armadillo_iot/conf/devinfo.conf')
   elif (product == 'OpenBlocks-IoT'):
     src = os.path.join(moat_root, 'ports/obs_iot/conf/devinfo.conf')
+  elif (product == 'RaspberryPi'):
+    src = os.path.join(moat_root, 'ports/raspberrypi/conf/devinfo.conf')
   else:
     src = os.path.join('ports/ri/conf/devinfo.conf')
   dst = os.path.join(moat_root, 'package/devinfo.conf')

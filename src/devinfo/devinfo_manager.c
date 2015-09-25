@@ -375,7 +375,11 @@ DEVINFOManager_GetVendorCallback(MoatValue* in_vendor, sse_pointer in_user_data,
     }
     sse_string_free(key, sse_true);
   } else {
-    LOG_ERROR("Getting devinfo has been failed with [%s].", sse_get_error_string(in_error_code));
+    if (in_error_code == SSE_E_NOENT) {
+      LOG_INFO("Getting devinfo has been failed with [%s].", sse_get_error_string(in_error_code));
+    } else {
+      LOG_ERROR("Getting devinfo has been failed with [%s].", sse_get_error_string(in_error_code));
+    }
   }
 
   if (value) {
@@ -410,7 +414,11 @@ DEVINFOManager_GetProductCallback(MoatValue* in_product, sse_pointer in_user_dat
     }
     sse_string_free(key, sse_true);
   } else {
-    LOG_ERROR("Getting devinfo has been failed with [%s].", sse_get_error_string(in_error_code));
+    if (in_error_code == SSE_E_NOENT) {
+      LOG_INFO("Getting devinfo has been failed with [%s].", sse_get_error_string(in_error_code));
+    } else{
+      LOG_INFO("Getting devinfo has been failed with [%s].", sse_get_error_string(in_error_code));
+    }
   }
 
   if (value) {
@@ -447,7 +455,11 @@ DEVINFOManager_GetModelCallback(MoatValue* in_model, sse_pointer in_user_data, s
     }
     sse_string_free(key, sse_true);
   } else {
-    LOG_ERROR("Getting devinfo has been failed with [%s].", sse_get_error_string(in_error_code));
+    if (in_error_code == SSE_E_NOENT) {
+      LOG_INFO("Getting devinfo has been failed with [%s].", sse_get_error_string(in_error_code));
+    } else {
+      LOG_ERROR("Getting devinfo has been failed with [%s].", sse_get_error_string(in_error_code));
+    }
   }
 
   if (value) {
@@ -484,7 +496,11 @@ DEVINFOManager_GetSerialCallback(MoatValue* in_serial, sse_pointer in_user_data,
     }
     sse_string_free(key, sse_true);
   } else {
-    LOG_ERROR("Getting devinfo has been failed with [%s].", sse_get_error_string(in_error_code));
+    if (in_error_code == SSE_E_NOENT) {      
+      LOG_INFO("Getting devinfo has been failed with [%s].", sse_get_error_string(in_error_code));
+    } else {
+      LOG_ERROR("Getting devinfo has been failed with [%s].", sse_get_error_string(in_error_code));
+    }
   }
 
   if (value) {
@@ -507,7 +523,11 @@ DEVINFOManager_GetHwVersionCallback(MoatValue* in_version, sse_pointer in_user_d
   if (in_error_code == SSE_E_OK) {
     TDEVINFORepository_SetHardwarePlatformHwVersion(&self->fRepository, in_version);
   } else {
-    LOG_ERROR("Getting devinfo has been failed with [%s].", sse_get_error_string(in_error_code));
+    if (in_error_code == SSE_E_NOENT) {
+      LOG_INFO("Getting devinfo has been failed with [%s].", sse_get_error_string(in_error_code));
+    } else {
+      LOG_ERROR("Getting devinfo has been failed with [%s].", sse_get_error_string(in_error_code));
+    }
   }
 
   return;
@@ -573,7 +593,11 @@ DEVINFOManager_GetCategoryCallback(MoatValue* in_category, sse_pointer in_user_d
   if (in_error_code == SSE_E_OK) {
     TDEVINFORepository_SetHardwarePlatformCategory(&self->fRepository, in_category);
   } else {
-    LOG_ERROR("Getting devinfo has been failed with [%s].", sse_get_error_string(in_error_code));
+    if (in_error_code == SSE_E_NOENT) {
+      LOG_INFO("Getting devinfo has been failed with [%s].", sse_get_error_string(in_error_code));
+    } else {
+      LOG_ERROR("Getting devinfo has been failed with [%s].", sse_get_error_string(in_error_code));
+    }
   }
 
   return;
@@ -588,7 +612,11 @@ DEVINFOManager_GetModemTypeCallback(MoatValue* in_type, sse_pointer in_user_data
   if (in_error_code == SSE_E_OK) {
     TDEVINFORepository_SetHardwareModemType(&self->fRepository, in_type);
   } else {
-    LOG_ERROR("Getting devinfo has been failed with [%s].", sse_get_error_string(in_error_code));
+    if (in_error_code == SSE_E_NOENT) {
+      LOG_INFO("Getting devinfo has been failed with [%s].", sse_get_error_string(in_error_code));
+    } else {
+      LOG_ERROR("Getting devinfo has been failed with [%s].", sse_get_error_string(in_error_code));
+    }
   }
 
   return;
@@ -603,7 +631,11 @@ DEVINFOManager_GetModemHwVersionCallback(MoatValue* in_version, sse_pointer in_u
   if (in_error_code == SSE_E_OK) {
     TDEVINFORepository_SetHardwareModemHwVersion(&self->fRepository, in_version);
   } else {
-    LOG_ERROR("Getting devinfo has been failed with [%s].", sse_get_error_string(in_error_code));
+    if (in_error_code == SSE_E_NOENT) {
+      LOG_INFO("Getting devinfo has been failed with [%s].", sse_get_error_string(in_error_code));
+    } else {
+      LOG_ERROR("Getting devinfo has been failed with [%s].", sse_get_error_string(in_error_code));
+    }
   }
 
   return;
@@ -618,7 +650,11 @@ DEVINFOManager_GetModemFwVersionCallback(MoatValue* in_version, sse_pointer in_u
   if (in_error_code == SSE_E_OK) {
     TDEVINFORepository_SetHardwareModemFwVersion(&self->fRepository, in_version);
   } else {
-    LOG_ERROR("Getting devinfo has been failed with [%s].", sse_get_error_string(in_error_code));
+    if (in_error_code == SSE_E_NOENT) {
+      LOG_INFO("Getting devinfo has been failed with [%s].", sse_get_error_string(in_error_code));
+    } else {
+      LOG_ERROR("Getting devinfo has been failed with [%s].", sse_get_error_string(in_error_code));
+    }
   }
 
   return;
@@ -665,7 +701,11 @@ DEVINFOManager_GetNetworkInterfaceCallback(MoatValue* in_if, sse_pointer in_user
 
     TDEVINFORepository_AddHardwareNetworkInterface(&self->fRepository, name, hw_addr, ipv4_addr, netmask, ipv6_addr);
   } else {
-    LOG_ERROR("Getting devinfo has been failed with [%s].", sse_get_error_string(in_error_code));
+    if (in_error_code == SSE_E_NOENT) {
+      LOG_INFO("Getting devinfo has been failed with [%s].", sse_get_error_string(in_error_code));
+    } else {
+      LOG_ERROR("Getting devinfo has been failed with [%s].", sse_get_error_string(in_error_code));
+    }
   }
 
   return;
@@ -680,7 +720,11 @@ DEVINFOManager_GetNetworkNameserverCallback(MoatValue* in_nameserver, sse_pointe
   if (in_error_code == SSE_E_OK) {
     TDEVINFORepository_AddHardwareNetworkNameserver(&self->fRepository, in_nameserver);
   } else {
-    LOG_ERROR("Getting devinfo has been failed with [%s].", sse_get_error_string(in_error_code));
+    if (in_error_code == SSE_E_NOENT) {
+      LOG_INFO("Getting devinfo has been failed with [%s].", sse_get_error_string(in_error_code));
+    } else {
+      LOG_ERROR("Getting devinfo has been failed with [%s].", sse_get_error_string(in_error_code));
+    }
   }
 
   return;
@@ -709,7 +753,11 @@ DEVINFOManager_GetSimCallback(MoatValue* in_sim, sse_pointer in_user_data, sse_i
     msisdn = moat_object_get_value(object, DEVINFO_KEY_SIM_MSISDN);
     TDEVINFORepository_AddHardwareSim(&self->fRepository, iccid, imsi, msisdn);
   } else {
-    LOG_ERROR("Getting devinfo has been failed with [%s].", sse_get_error_string(in_error_code));
+    if (in_error_code == SSE_E_NOENT) {
+      LOG_INFO("Getting devinfo has been failed with [%s].", sse_get_error_string(in_error_code));
+    } else {
+      LOG_ERROR("Getting devinfo has been failed with [%s].", sse_get_error_string(in_error_code));
+    }
   }
 
   return;
@@ -737,7 +785,11 @@ DEVINFOManager_GetOsCallback(MoatValue* in_os, sse_pointer in_user_data, sse_int
     version = moat_object_get_value(object, DEVINFO_KEY_OS_VERSION);
     TDEVINFORepository_SetSoftwareOS(&self->fRepository, type, version);
   } else {
-    LOG_ERROR("Getting devinfo has been failed with [%s].", sse_get_error_string(in_error_code));
+    if (in_error_code == SSE_E_NOENT) {
+      LOG_INFO("Getting devinfo has been failed with [%s].", sse_get_error_string(in_error_code));
+    } else {
+      LOG_ERROR("Getting devinfo has been failed with [%s].", sse_get_error_string(in_error_code));
+    }
   }
 
   return;
@@ -766,7 +818,11 @@ DEVINFOManager_GetSsclCallback(MoatValue* in_os, sse_pointer in_user_data, sse_i
     sdk_version = moat_object_get_value(object, DEVINFO_KEY_SSCL_SDK_VERSION);
     TDEVINFORepository_SetSoftwareSscl(&self->fRepository, type, version, sdk_version);
   } else {
-    LOG_ERROR("Getting devinfo has been failed with [%s].", sse_get_error_string(in_error_code));
+    if (in_error_code == SSE_E_NOENT) {
+      LOG_INFO("Getting devinfo has been failed with [%s].", sse_get_error_string(in_error_code));
+    } else {
+      LOG_ERROR("Getting devinfo has been failed with [%s].", sse_get_error_string(in_error_code));
+    }
   }
 
   return;

@@ -4,6 +4,7 @@ import os
 import pprint
 import subprocess
 import sys
+import shutil
 import tools.moatutils as moatutils
 
 CC = os.environ.get('CC', 'cc')
@@ -44,6 +45,17 @@ parser.add_option("--token",
     action="store",
     dest="token_path",
     help="Path to the security token file. Default path is \'./package/token.bin\'")
+
+parser.add_option("--unittest",
+                  action="store_true",
+                  dest="unittest",
+                  default=False,
+                  help="Enable to perform unit test.")
+
+parser.add_option("--product",
+    action="store",
+    dest="target_product",
+    help="M2M Gateway product to build for. Valid values are: generic, Armadillo-IoT, OpenBlocks-IoT, RaspberryPi.")
 
 (options, args) = parser.parse_args()
 
@@ -217,6 +229,19 @@ def configure_moat(o):
   generate_package_json(moat_path, package_name, version)
   generate_skeleton(moat_path, package_name)
 
+def generate_devinfo_config(product):
+  if (product == 'Armadillo-IoT'):
+    src = os.path.join(moat_root, 'ports/armadillo_iot/conf/devinfo.conf')
+  elif (product == 'OpenBlocks-IoT'):
+    src = os.path.join(moat_root, 'ports/obs_iot/conf/devinfo.conf')
+  elif (product == 'RaspberryPi'):
+    src = os.path.join(moat_root, 'ports/raspberrypi/conf/devinfo.conf')
+  else:
+    src = os.path.join('ports/ri/conf/devinfo.conf')
+  dst = os.path.join(moat_root, 'package/devinfo.conf')
+  print 'creating', dst
+  shutil.copyfile(src, dst)
+
 def configure_app(o):
 
   configure_moat(o)
@@ -240,6 +265,10 @@ def configure_app(o):
   moat_lib_dir = os.path.join(moat_root, 'test', target_arch, 'lib')
   o['library_dirs'] = [ moat_lib_dir ]
   o[ 'ldflags' ] = [ '-L' + moat_lib_dir ]
+
+  o['variables']['test_config'] = 'unit' if options.unittest else 'none'
+  o['variables']['target_product'] = options.target_product if options.target_product in ['generic', 'Armadillo-IoT', 'OpenBlocks-IoT', 'RaspberryPi' ] else 'generic'
+  generate_devinfo_config(o['variables']['target_product'])
 
 output = {
   'variables': {},
